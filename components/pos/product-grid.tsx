@@ -44,7 +44,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                 {product.name}
               </h3>
               <div className="flex items-center justify-between mt-2">
-                <span className="text-lg font-bold text-primary">
+                <span className="text-lg font-bold ">
                   ${Number(product.price).toFixed(2)}
                 </span>
                 <Button

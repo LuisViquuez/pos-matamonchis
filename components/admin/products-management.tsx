@@ -65,8 +65,9 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
       const newProduct: Product = {
         id: Date.now(), // Temporary ID until page refresh
         ...data,
+        image_url: data.image_url || null,
         is_active: true,
-        created_at: new Date().toISOString(),
+        created_at: new Date(),
       };
       setProducts([...products, newProduct]);
       setIsCreateOpen(false);
@@ -76,7 +77,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
 
   const handleUpdate = async (id: number, data: UpdateProductDTO) => {
     setIsSubmitting(true);
-    const result = await updateProductAction(id, data);
+    const result = await updateProductAction(data);
     if (result.success) {
       setProducts(
         products.map((p) => (p.id === id ? { ...p, ...data } : p))
@@ -115,10 +116,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
             <DialogHeader>
               <DialogTitle>Crear Producto</DialogTitle>
             </DialogHeader>
-            <ProductForm
-              onSubmit={handleCreate}
-              isSubmitting={isSubmitting}
-            />
+            <ProductForm onSubmit={handleCreate} isSubmitting={isSubmitting} />
           </DialogContent>
         </Dialog>
       </div>
@@ -189,7 +187,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
                       </td>
                       <td className="py-3 px-2 text-right">
                         <span className="text-sm font-semibold text-foreground">
-                          ${Number(product.price).toFixed(2)}
+                          ₡{Number(product.price).toFixed(2)}
                         </span>
                       </td>
                       <td className="py-3 px-2 text-right">
@@ -242,7 +240,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
           {editProduct && (
             <ProductForm
               initialData={editProduct}
-              onSubmit={(data) => handleUpdate(editProduct.id, data)}
+              onSubmit={(data: UpdateProductDTO) => handleUpdate(editProduct.id, data)}
               isSubmitting={isSubmitting}
             />
           )}
@@ -252,9 +250,16 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
   );
 }
 
-interface ProductFormProps {
-  initialData?: Product;
-  onSubmit: (data: CreateProductDTO | UpdateProductDTO) => void;
+type createProductFormProps = {
+  initialData?: Product
+  onSubmit: (data: CreateProductDTO) => Promise<void>;
+}
+type updateProductFormProps = {
+  initialData: Product
+  onSubmit: (data: UpdateProductDTO) => Promise<void>;
+}
+
+type ProductFormProps = (createProductFormProps | updateProductFormProps) & {
   isSubmitting: boolean;
 }
 
@@ -269,7 +274,9 @@ function ProductForm({ initialData, onSubmit, isSubmitting }: ProductFormProps) 
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
     onSubmit({
+      id: initialData?.id || 0,
       name: formData.name,
       price: parseFloat(formData.price),
       category: formData.category,

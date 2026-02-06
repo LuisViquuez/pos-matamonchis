@@ -16,7 +16,7 @@ export async function getProductsListAction() {
 }
 
 export async function createProductAction(
-  data: CreateProductDTO
+  data: CreateProductDTO,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin();
@@ -31,12 +31,11 @@ export async function createProductAction(
 }
 
 export async function updateProductAction(
-  id: number,
-  data: UpdateProductDTO
+  data: UpdateProductDTO,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin();
-    await updateProduct(id, data);
+    await updateProduct(data);
     revalidatePath("/dashboard/products");
     revalidatePath("/dashboard/pos");
     return { success: true };
@@ -47,7 +46,7 @@ export async function updateProductAction(
 }
 
 export async function deleteProductAction(
-  id: number
+  id: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin();
