@@ -44,9 +44,9 @@ export async function login(emailOrUsername: string, password: string, rememberM
       LIMIT 1
     ` as User[]
 
-    if (users.length === 0) {
-      console.log('No user found with given email or username')
-      return { success: false, error: 'Invalid credentials' }
+      if (users.length === 0) {
+        console.log('No user found with given email or username')
+        return { success: false, error: 'Credenciales inválidas' }
     }
 
     const user = users[0]
@@ -60,7 +60,7 @@ export async function login(emailOrUsername: string, password: string, rememberM
     if (!isValid) {
       console.log('Password verification failed ' + user.password_hash)
       
-      return { success: false, error: 'Invalid credentials' }
+        return { success: false, error: 'Credenciales inválidas' }
     }
 
     const token = generateToken(user.id)
@@ -72,7 +72,7 @@ export async function login(emailOrUsername: string, password: string, rememberM
     }
 
     const cookieStore = await cookies()
-    const maxAge = rememberMe ? 60 * 60 * 24 * 30 : 60 * 60 * 24 // 30 days or 1 day
+      const maxAge = 60 * 60 * 8 // 8 hours
 
     cookieStore.set(AUTH_COOKIE_NAME, token, {
       httpOnly: true,
@@ -93,7 +93,7 @@ export async function login(emailOrUsername: string, password: string, rememberM
     return { success: true, user: authUser, token }
   } catch (error) {
     console.error('Login error:', error)
-    return { success: false, error: 'An error occurred during login' }
+      return { success: false, error: 'Ocurrió un error al iniciar sesión' }
   }
 }
 
@@ -165,7 +165,7 @@ export async function createSession(user: AuthUser): Promise<string> {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24,
+    maxAge: 60 * 60 * 8,
     path: '/',
   })
 
@@ -173,7 +173,7 @@ export async function createSession(user: AuthUser): Promise<string> {
     httpOnly: false,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24,
+    maxAge: 60 * 60 * 8,
     path: '/',
   })
 

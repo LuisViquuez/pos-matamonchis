@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useEffect } from "react";
 import { useActionState } from "react";
 import { loginAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,55 @@ import { AlertCircle, Loader2, Mail, Lock } from "lucide-react";
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const [savedEmail, setSavedEmail] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("pos_remember_email");
+      if (saved) setSavedEmail(saved);
+    } catch {}
+  }, []);
+
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    setValidationError(null);
+    const form = e.currentTarget;
+    const email = (form.elements.namedItem("email") as HTMLInputElement)?.value?.trim() || "";
+    const password = (form.elements.namedItem("password") as HTMLInputElement)?.value || "";
+    const remember = (form.elements.namedItem("rememberMe") as HTMLInputElement)?.checked;
+
+    const emailRegex = /^\S+@\S+\.\S+$/;
+
+    if (!email) {
+      e.preventDefault();
+      setValidationError("El correo es requerido");
+      return;
+    }
+
+    if (!emailRegex.test(email)) {
+      e.preventDefault();
+      setValidationError("Ingrese un correo electrónico válido");
+      return;
+    }
+
+    if (!password) {
+      e.preventDefault();
+      setValidationError("La contraseña es requerida");
+      return;
+    }
+
+    if (password.length < 8) {
+      e.preventDefault();
+      setValidationError("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
+
+    try {
+      if (remember) localStorage.setItem("pos_remember_email", email);
+      else localStorage.removeItem("pos_remember_email");
+    } catch {}
+    // allow form to submit to server action
+  }
 
   return (
     <Card className="border-0 shadow-xl bg-card/80 backdrop-blur-sm">
@@ -22,7 +72,14 @@ export function LoginForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action={formAction} className="space-y-4">
+        <form onSubmit={handleSubmit} action={formAction} className="space-y-4">
+          {validationError && (
+            <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
+              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <span>{validationError}</span>
+            </div>
+          )}
+
           {state?.error && (
             <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
               <AlertCircle className="h-4 w-4 flex-shrink-0" />
@@ -43,6 +100,7 @@ export function LoginForm() {
                 placeholder="correo@ejemplo.com"
                 required
                 disabled={isPending}
+                defaultValue={savedEmail}
                 className="pl-10 h-11 bg-background"
               />
             </div>
@@ -64,6 +122,20 @@ export function LoginForm() {
                 className="pl-10 h-11 bg-background"
               />
             </div>
+          </div>
+          
+          <div className="flex items-center justify-between">
+            <label className="inline-flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                defaultChecked={!!savedEmail}
+                disabled={isPending}
+                className="w-4 h-4"
+              />
+              <span>Recordarme</span>
+            </label>
           </div>
           
           <Button
