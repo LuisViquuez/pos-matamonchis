@@ -12,7 +12,7 @@ import type { AuthUser } from "@/types/models";
 
 export async function loginAction(
   _prevState: { error?: string } | null,
-  formData: FormData
+  formData: FormData,
 ): Promise<{ error?: string }> {
   const start = Date.now();
   const email = (formData.get("email") as string) || "";

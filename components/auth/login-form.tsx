@@ -6,7 +6,13 @@ import { loginAction } from "@/app/actions/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { AlertCircle, Loader2, Mail, Lock } from "lucide-react";
 
 export function LoginForm() {
@@ -24,9 +30,13 @@ export function LoginForm() {
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     setValidationError(null);
     const form = e.currentTarget;
-    const email = (form.elements.namedItem("email") as HTMLInputElement)?.value?.trim() || "";
-    const password = (form.elements.namedItem("password") as HTMLInputElement)?.value || "";
-    const remember = (form.elements.namedItem("rememberMe") as HTMLInputElement)?.checked;
+    const email =
+      (form.elements.namedItem("email") as HTMLInputElement)?.value?.trim() ||
+      "";
+    const password =
+      (form.elements.namedItem("password") as HTMLInputElement)?.value || "";
+    const remember = (form.elements.namedItem("rememberMe") as HTMLInputElement)
+      ?.checked;
 
     const emailRegex = /^\S+@\S+\.\S+$/;
 
@@ -86,7 +96,7 @@ export function LoginForm() {
               <span>{state.error}</span>
             </div>
           )}
-          
+
           <div className="space-y-2">
             <Label htmlFor="email" className="text-foreground">
               Correo Electrónico
@@ -105,7 +115,7 @@ export function LoginForm() {
               />
             </div>
           </div>
-          
+
           <div className="space-y-2">
             <Label htmlFor="password" className="text-foreground">
               Contraseña
@@ -123,7 +133,7 @@ export function LoginForm() {
               />
             </div>
           </div>
-          
+
           <div className="flex items-center justify-between">
             <label className="inline-flex items-center gap-2 text-sm">
               <input
@@ -137,7 +147,7 @@ export function LoginForm() {
               <span>Recordarme</span>
             </label>
           </div>
-          
+
           <Button
             type="submit"
             className="w-full h-11 text-base font-medium"
