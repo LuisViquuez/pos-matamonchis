@@ -2,8 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAuth } from "@/app/actions/auth";
-import { createSale, getSaleById, getSaleItems } from "@/services/sales";
-import { getActiveProducts, updateProductStock } from "@/services/products";
+import { createSale, getSaleById } from "@/services/sales";
+import { getActiveProducts } from "@/services/products";
 import type { CreateSaleDTO, SaleWithItems } from "@/types/dto";
 
 export async function getProductsAction() {
@@ -11,39 +11,34 @@ export async function getProductsAction() {
   return products;
 }
 
-export async function createSaleAction(data: CreateSaleDTO): Promise<{ success: boolean; saleId?: number; error?: string }> {
+export async function createSaleAction(
+  data: CreateSaleDTO
+): Promise<{ success: boolean; saleId?: number; error?: string }> {
   try {
     const user = await requireAuth();
-    
-    // Create sale with user ID
-    const saleId = await createSale({
-      ...data,
-      user_id: user.id,
-    });
 
-    // Update stock for each item
-    for (const item of data.items) {
-      await updateProductStock(item.product_id, -item.quantity);
-    }
+    // Stock is updated inside the service's createSale
+    const sale = await createSale(data, user.id);
 
     revalidatePath("/dashboard");
     revalidatePath("/dashboard/pos");
     revalidatePath("/dashboard/reports");
 
-    return { success: true, saleId };
+    return { success: true, saleId: sale.id };
   } catch (error) {
     console.error("Error creating sale:", error);
     return { success: false, error: "Error al procesar la venta" };
   }
 }
 
-export async function getSaleDetailsAction(saleId: number): Promise<SaleWithItems | null> {
+export async function getSaleDetailsAction(
+  saleId: number
+): Promise<SaleWithItems | null> {
   try {
-    const sale = await getSaleById(saleId);
-    if (!sale) return null;
+    const result = await getSaleById(saleId);
+    if (!result) return null;
 
-    const items = await getSaleItems(saleId);
-    return { ...sale, items };
+    return { ...result.sale, items: result.items } as SaleWithItems;
   } catch (error) {
     console.error("Error getting sale details:", error);
     return null;
