@@ -1,0 +1,114 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id           Int      @id @default(autoincrement())
+  name         String   @db.VarChar(120)
+  email        String   @unique @db.VarChar(150)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  role         String   @db.VarChar(20)
+  isActive     Boolean  @map("is_active") @default(true)
+  createdAt    DateTime @map("created_at") @default(now())
+  sales        Sale[]
+
+  @@map("users")
+}
+
+model Customer {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(150)
+  phone     String?  @db.VarChar(50)
+  email     String?  @db.VarChar(150)
+  createdAt DateTime @map("created_at") @default(now())
+  sales     Sale[]
+
+  @@map("customers")
+}
+
+model Product {
+  id        Int      @id @default(autoincrement())
+  name      String   @db.VarChar(150)
+  price     Decimal  @db.Decimal(10, 2)
+  category  String   @db.VarChar(100)
+  stock     Int      @default(0)
+  imageUrl  String?  @map("image_url")
+  isActive  Boolean  @map("is_active") @default(true)
+  createdAt DateTime @map("created_at") @default(now())
+  saleItems SaleItem[]
+  productPromotions ProductPromotion[]
+
+  @@map("products")
+}
+
+model Promotion {
+  id            String   @id
+  name          String?  @db.VarChar(120)
+  type          String?  @db.VarChar(20)
+  discountValue Decimal? @map("discount_value") @db.Decimal(10, 2)
+  minQuantity   Int?     @map("min_quantity")
+  isActive      Boolean  @map("is_active") @default(true)
+  createdAt     DateTime @map("created_at") @default(now())
+
+  productPromotions ProductPromotion[]
+
+  @@map("promotions")
+}
+
+model ProductPromotion {
+  productId   Int
+  promotionId String
+
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  promotion Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+
+  @@id([productId, promotionId])
+  @@map("product_promotions")
+}
+
+model Sale {
+  id            Int       @id @default(autoincrement())
+  customerId    Int?      @map("customer_id")
+  userId        Int       @map("user_id")
+  customerName  String?   @map("customer_name") @db.VarChar(150)
+  subtotal      Decimal   @db.Decimal(10, 2)
+  tax           Decimal   @db.Decimal(10, 2)
+  discount      Decimal   @db.Decimal(10, 2)
+  total         Decimal   @db.Decimal(10, 2)
+  paymentMethod String    @map("payment_method") @db.VarChar(20)
+  cashReceived  Decimal?  @map("cash_received") @db.Decimal(10, 2)
+  changeAmount  Decimal?  @map("change_amount") @db.Decimal(10, 2)
+  createdAt     DateTime  @map("created_at") @default(now())
+
+  customer Customer? @relation(fields: [customerId], references: [id])
+  user     User      @relation(fields: [userId], references: [id])
+  items    SaleItem[]
+
+  @@map("sales")
+}
+
+model SaleItem {
+  id               Int     @id @default(autoincrement())
+  saleId           Int     @map("sale_id")
+  productId        Int     @map("product_id")
+  productName      String  @map("product_name") @db.VarChar(150)
+  quantity         Int
+  unitPrice        Decimal @map("unit_price") @db.Decimal(10, 2)
+  subtotal         Decimal @db.Decimal(10, 2)
+  promotionApplied String? @map("promotion_applied") @db.VarChar(100)
+
+  sale    Sale    @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("sale_items")
+}
