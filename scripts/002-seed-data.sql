@@ -26,10 +26,34 @@ INSERT INTO products (name, price, category, stock, is_active) VALUES
 ('Agua 1L', 3500.00, 'Bebidas', 100, true)
 ON CONFLICT DO NOTHING;
 
--- Insert Gelatina 2x1 promotion
-INSERT INTO promotions (id, name, type, product_id, discount_value, min_quantity, is_active) VALUES
-('gelatina-2x1', 'Gelatina 2x1', '2x1', NULL, 0, 2, true)
+INSERT INTO promotions (id, name, type, discount_value, min_quantity, is_active) VALUES
+('gelatina-2x1', 'Gelatina 2x1', '2x1', 0, 2, true)
 ON CONFLICT (id) DO NOTHING;
+
+-- Link the promotion to all products whose name starts with 'Gelatina' (assign 2x1 to gelatinas)
+DO $$
+BEGIN
+	IF EXISTS (
+		SELECT 1 FROM information_schema.columns
+		WHERE table_name = 'product_promotions' AND column_name = 'product_id'
+	) THEN
+		INSERT INTO product_promotions (product_id, promotion_id)
+		SELECT p.id, 'gelatina-2x1'
+		FROM products p
+		WHERE LOWER(p.name) LIKE 'gelatina%'
+		ON CONFLICT DO NOTHING;
+
+	ELSIF EXISTS (
+		SELECT 1 FROM information_schema.columns
+		WHERE table_name = 'product_promotions' AND column_name = '"productId"'
+	) THEN
+		-- Some setups (Prisma) create camelCase column names; handle that too
+		EXECUTE 'INSERT INTO product_promotions ("productId", "promotionId") SELECT id, $1 FROM products WHERE LOWER(name) LIKE ''gelatina%'' ON CONFLICT DO NOTHING' USING 'gelatina-2x1';
+
+	ELSE
+		RAISE NOTICE 'product_promotions table does not have expected columns';
+	END IF;
+END$$;
 
 -- Insert sample customers
 INSERT INTO customers (name, phone, email) VALUES
