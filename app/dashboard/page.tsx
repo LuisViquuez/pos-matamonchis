@@ -4,6 +4,8 @@ import { DashboardStats } from "@/components/dashboard/stats";
 import { RecentSalesTable } from "@/components/dashboard/recent-sales";
 import { QuickActions } from "@/components/dashboard/quick-actions";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const user = await requireAuth();
   const [summary, recentSales] = await Promise.all([

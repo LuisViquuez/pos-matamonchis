@@ -11,6 +11,8 @@ import { TopProductsTable } from "@/components/reports/top-products-table";
 import { PaymentMethodChart } from "@/components/reports/payment-method-chart";
 import { HourlySalesChart } from "@/components/reports/hourly-sales-chart";
 
+export const dynamic = 'force-dynamic';
+
 interface ReportsPageProps {
   searchParams: Promise<{ period?: string; startDate?: string; endDate?: string }>;
 }
