@@ -62,8 +62,8 @@ export async function login(
     const user = users[0];
 
     if (!user.is_active) {
-      console.log("Account is deactivated");
-      return { success: false, error: "Account is deactivated" };
+      console.log("La cuenta está desactivada");
+      return { success: false, error: "La cuenta está desactivada" };
     }
 
     const isValid = await verifyPassword(password, user.password_hash || "");

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react"
+import React from "react";
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -22,7 +22,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Edit, UserX, UserCheck, Users, Loader2 } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Edit,
+  UserX,
+  UserCheck,
+  Users,
+  Loader2,
+} from "lucide-react";
 import {
   createUserAction,
   updateUserAction,
@@ -45,7 +53,7 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
   const filteredUsers = users.filter(
     (user) =>
       user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      user.email.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleCreate = async (data: CreateUserDTO) => {
@@ -72,8 +80,10 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
     if (result.success) {
       setUsers(
         users.map((u) =>
-          u.id === id ? { ...u, name: data.name!, email: data.email!, role: data.role! } : u
-        )
+          u.id === id
+            ? { ...u, name: data.name!, email: data.email!, role: data.role! }
+            : u,
+        ),
       );
       setEditUser(null);
     }
@@ -84,9 +94,7 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
     const result = await toggleUserStatusAction(id);
     if (result.success) {
       setUsers(
-        users.map((u) =>
-          u.id === id ? { ...u, is_active: !u.is_active } : u
-        )
+        users.map((u) => (u.id === id ? { ...u, is_active: !u.is_active } : u)),
       );
     }
   };
@@ -188,7 +196,9 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
                       </td>
                       <td className="py-3 px-2 text-center">
                         <Badge
-                          variant={user.role === "admin" ? "default" : "secondary"}
+                          variant={
+                            user.role === "admin" ? "default" : "secondary"
+                          }
                         >
                           {user.role === "admin" ? "Administrador" : "Cajero"}
                         </Badge>
@@ -196,7 +206,11 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
                       <td className="py-3 px-2 text-center">
                         <Badge
                           variant={user.is_active ? "default" : "secondary"}
-                          className={user.is_active ? "bg-green-600 hover:bg-green-700" : ""}
+                          className={
+                            user.is_active
+                              ? "bg-green-600 hover:bg-green-700"
+                              : ""
+                          }
                         >
                           {user.is_active ? "Activo" : "Inactivo"}
                         </Badge>
@@ -243,7 +257,9 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
           {editUser && (
             <UserForm
               initialData={editUser}
-              onSubmit={(data) => handleUpdate(editUser.id, data as UpdateUserDTO)}
+              onSubmit={(data) =>
+                handleUpdate(editUser.id, data as UpdateUserDTO)
+              }
               isSubmitting={isSubmitting}
             />
           )}
@@ -269,7 +285,7 @@ function UserForm({ initialData, onSubmit, isSubmitting }: UserFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (initialData) {
       // Update - password is optional
       const updateData: UpdateUserDTO = {
@@ -311,6 +327,7 @@ function UserForm({ initialData, onSubmit, isSubmitting }: UserFormProps) {
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           required
+          maxLength={150}
         />
       </div>
       <div className="space-y-2">
@@ -321,8 +338,11 @@ function UserForm({ initialData, onSubmit, isSubmitting }: UserFormProps) {
           id="password"
           type="password"
           value={formData.password}
-          onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+          onChange={(e) =>
+            setFormData({ ...formData, password: e.target.value })
+          }
           required={!initialData}
+          maxLength={16}
         />
       </div>
       <div className="space-y-2">

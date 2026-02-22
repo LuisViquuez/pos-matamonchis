@@ -2,8 +2,8 @@ import { z } from "zod";
 
 // Auth DTOs
 export const loginSchema = z.object({
-  emailOrUsername: z.string().min(1, "Email or username is required"),
-  password: z.string().min(1, "Password is required"),
+  emailOrUsername: z.string().min(1, "El correo o usuario es requerido"),
+  password: z.string().min(1, "La contraseña es requerida"),
   rememberMe: z.boolean().default(false),
 });
 
@@ -11,10 +11,10 @@ export type LoginDTO = z.infer<typeof loginSchema>;
 
 // Product DTOs
 export const createProductSchema = z.object({
-  name: z.string().min(1, "Product name is required").max(150),
-  price: z.number().positive("Price must be positive"),
-  category: z.string().min(1, "Category is required").max(100),
-  stock: z.number().int().min(0, "Stock cannot be negative").default(0),
+  name: z.string().min(1, "El nombre del producto es requerido").max(150),
+  price: z.number().positive("El precio debe ser positivo"),
+  category: z.string().min(1, "La categoría es requerida").max(100),
+  stock: z.number().int().min(0, "El stock no puede ser negativo").default(0),
   image_url: z.string().url().nullable().optional(),
   is_active: z.boolean().default(true),
 });
@@ -29,9 +29,15 @@ export type UpdateProductDTO = z.infer<typeof updateProductSchema>;
 
 // User DTOs
 export const createUserSchema = z.object({
-  name: z.string().min(1, "Name is required").max(120),
-  email: z.string().email("Invalid email").max(150),
-  password: z.string().min(6, "Password must be at least 6 characters"),
+  name: z.string().min(1, "El nombre es requerido").max(120),
+  email: z
+    .string()
+    .email("Correo inválido")
+    .max(150, "El correo no puede tener más de 150 caracteres"),
+  password: z
+    .string()
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(16, "La contraseña no puede tener más de 16 caracteres"),
   role: z.enum(["admin", "cashier"]),
   is_active: z.boolean().default(true),
 });
@@ -40,11 +46,16 @@ export type CreateUserDTO = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z.object({
   id: z.number(),
-  name: z.string().min(1, "Name is required").max(120).optional(),
-  email: z.string().email("Invalid email").max(150).optional(),
+  name: z.string().min(1, "El nombre es requerido").max(120).optional(),
+  email: z
+    .string()
+    .email("Correo inválido")
+    .max(150, "El correo no puede tener más de 150 caracteres")
+    .optional(),
   password: z
     .string()
-    .min(6, "Password must be at least 6 characters")
+    .min(6, "La contraseña debe tener al menos 6 caracteres")
+    .max(16, "La contraseña no puede tener más de 16 caracteres")
     .optional(),
   role: z.enum(["admin", "cashier"]).optional(),
   is_active: z.boolean().optional(),
@@ -72,7 +83,7 @@ export const createSaleSchema = z.object({
   payment_method: z.enum(["cash", "card", "transfer"]),
   cash_received: z.number().nullable().optional(),
   change_amount: z.number().nullable().optional(),
-  items: z.array(saleItemSchema).min(1, "At least one item is required"),
+  items: z.array(saleItemSchema).min(1, "Se requiere al menos un artículo"),
 });
 
 export type CreateSaleDTO = z.infer<typeof createSaleSchema>;
@@ -81,17 +92,22 @@ export type SaleItemDTO = z.infer<typeof saleItemSchema>;
 // Payment DTOs
 export const cashPaymentSchema = z.object({
   method: z.literal("cash"),
-  cashReceived: z.number().positive("Amount must be positive"),
+  cashReceived: z.number().positive("El monto debe ser positivo"),
 });
 
 export const cardPaymentSchema = z.object({
   method: z.literal("card"),
-  cardNumber: z.string().regex(/^\d{16}$/, "Card number must be 16 digits"),
-  cardHolder: z.string().min(1, "Card holder name is required"),
+  cardNumber: z
+    .string()
+    .regex(/^\d{16}$/, "El número de tarjeta debe tener 16 dígitos"),
+  cardHolder: z.string().min(1, "El nombre del titular es requerido"),
   expiration: z
     .string()
-    .regex(/^(0[1-9]|1[0-2])\/\d{2}$/, "Invalid expiration format (MM/YY)"),
-  cvv: z.string().regex(/^\d{3,4}$/, "CVV must be 3 or 4 digits"),
+    .regex(
+      /^(0[1-9]|1[0-2])\/\d{2}$/,
+      "Formato de vencimiento inválido (MM/AA)",
+    ),
+  cvv: z.string().regex(/^\d{3,4}$/, "El CVV debe tener 3 o 4 dígitos"),
 });
 
 export type CashPaymentDTO = z.infer<typeof cashPaymentSchema>;

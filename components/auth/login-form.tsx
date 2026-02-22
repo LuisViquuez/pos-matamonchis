@@ -111,6 +111,7 @@ export function LoginForm() {
                 required
                 disabled={isPending}
                 defaultValue={savedEmail}
+                maxLength={150}
                 className="pl-10 h-11 bg-background"
               />
             </div>
@@ -129,6 +130,7 @@ export function LoginForm() {
                 placeholder="••••••••"
                 required
                 disabled={isPending}
+                maxLength={16}
                 className="pl-10 h-11 bg-background"
               />
             </div>
