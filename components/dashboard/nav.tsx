@@ -26,9 +26,9 @@ interface DashboardNavProps {
 const navItems = [
   { href: "/dashboard", label: "Inicio", icon: Home },
   { href: "/dashboard/pos", label: "Punto de Venta", icon: ShoppingCart },
-  { href: "/dashboard/reports", label: "Reportes", icon: BarChart3 },
+  // { href: "/dashboard/reports", label: "Reportes", icon: BarChart3 },
   { href: "/dashboard/products", label: "Productos", icon: Package, adminOnly: true },
-  { href: "/dashboard/users", label: "Usuarios", icon: Users, adminOnly: true },
+  // { href: "/dashboard/users", label: "Usuarios", icon: Users, adminOnly: true },
 ];
 
 export function DashboardNav({ user }: DashboardNavProps) {

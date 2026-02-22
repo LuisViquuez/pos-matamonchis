@@ -29,7 +29,7 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <DashboardStats summary={summary} />
+      {/* <DashboardStats summary={summary} />
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2">
@@ -38,7 +38,7 @@ export default async function DashboardPage() {
         <div>
           <QuickActions isAdmin={user.role === "admin"} />
         </div>
-      </div>
+      </div> */}
     </div>
   );
 }
