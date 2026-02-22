@@ -3,8 +3,8 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { DollarSign, Receipt, TrendingUp, ShoppingBag } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Banknote, Receipt, TrendingUp, ShoppingBag } from "lucide-react";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { SalesReport } from "@/types/dto";
 
 interface ReportsHeaderProps {
@@ -29,8 +29,7 @@ export function ReportsHeader({ period, summary }: ReportsHeaderProps) {
     average_ticket: summary?.average_ticket ?? 0,
     items_sold: summary?.items_sold ?? 0,
   };
-  
-  
+
   const handlePeriodChange = (newPeriod: string) => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("period", newPeriod);
@@ -40,10 +39,8 @@ export function ReportsHeader({ period, summary }: ReportsHeaderProps) {
   const stats = [
     {
       title: "Ventas Totales",
-      value: `$${safeSummary.total_sales.toLocaleString("es-MX", {
-        minimumFractionDigits: 2,
-      })}`,
-      icon: DollarSign,
+      value: formatCurrency(safeSummary.total_sales),
+      icon: Banknote,
       color: "text-primary",
       bgColor: "bg-primary/10",
     },
@@ -56,9 +53,7 @@ export function ReportsHeader({ period, summary }: ReportsHeaderProps) {
     },
     {
       title: "Ticket Promedio",
-      value: `$${safeSummary.average_ticket.toLocaleString("es-MX", {
-        minimumFractionDigits: 2,
-      })}`,
+      value: formatCurrency(safeSummary.average_ticket),
       icon: TrendingUp,
       color: "text-chart-3",
       bgColor: "bg-chart-3/10",
@@ -71,7 +66,6 @@ export function ReportsHeader({ period, summary }: ReportsHeaderProps) {
       bgColor: "bg-chart-5/10",
     },
   ];
-  
 
   return (
     <div className="space-y-4">
@@ -89,10 +83,7 @@ export function ReportsHeader({ period, summary }: ReportsHeaderProps) {
               variant="ghost"
               size="sm"
               onClick={() => handlePeriodChange(p.id)}
-              className={cn(
-                "px-4",
-                period === p.id && "bg-card shadow-sm"
-              )}
+              className={cn("px-4", period === p.id && "bg-card shadow-sm")}
             >
               {p.label}
             </Button>
@@ -111,8 +102,12 @@ export function ReportsHeader({ period, summary }: ReportsHeaderProps) {
                     <Icon className={`h-5 w-5 ${stat.color}`} />
                   </div>
                   <div>
-                    <p className="text-xs text-muted-foreground">{stat.title}</p>
-                    <p className="text-xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {stat.title}
+                    </p>
+                    <p className="text-xl font-bold text-foreground">
+                      {stat.value}
+                    </p>
                   </div>
                 </div>
               </CardContent>

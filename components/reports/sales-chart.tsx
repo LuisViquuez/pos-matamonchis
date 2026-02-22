@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import { formatCurrency } from "@/lib/utils";
 import type { HourlySales } from "@/types/dto";
 
 interface SalesChartProps {
@@ -37,8 +38,16 @@ export function SalesChart({ data }: SalesChartProps) {
             <AreaChart data={chartData}>
               <defs>
                 <linearGradient id="colorVentas" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="oklch(0.65 0.2 350)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="oklch(0.65 0.2 350)" stopOpacity={0} />
+                  <stop
+                    offset="5%"
+                    stopColor="oklch(0.65 0.2 350)"
+                    stopOpacity={0.3}
+                  />
+                  <stop
+                    offset="95%"
+                    stopColor="oklch(0.65 0.2 350)"
+                    stopOpacity={0}
+                  />
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
@@ -52,7 +61,12 @@ export function SalesChart({ data }: SalesChartProps) {
                 tick={{ fill: "oklch(0.5 0.02 350)", fontSize: 12 }}
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(value) => `$${value}`}
+                tickFormatter={(value) =>
+                  formatCurrency(value, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })
+                }
               />
               <Tooltip
                 contentStyle={{
@@ -60,7 +74,7 @@ export function SalesChart({ data }: SalesChartProps) {
                   border: "1px solid oklch(0.9 0.02 350)",
                   borderRadius: "8px",
                 }}
-                formatter={(value: number) => [`$${value.toFixed(2)}`, "Ventas"]}
+                formatter={(value: number) => [formatCurrency(value), "Ventas"]}
               />
               <Area
                 type="monotone"

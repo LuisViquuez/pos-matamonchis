@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/utils";
 import type { TopProduct } from "@/types/dto";
 
 interface TopProductsTableProps {
@@ -38,7 +39,7 @@ export function TopProductsTable({ products }: TopProductsTableProps) {
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-semibold text-foreground">
-                    ${Number(product.total_revenue).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                    {formatCurrency(product.total_revenue)}
                   </p>
                 </div>
               </div>

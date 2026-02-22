@@ -3,6 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import type { CartItem } from "@/types/dto";
 
 interface CartPanelProps {
@@ -79,7 +80,7 @@ export function CartPanel({
                       {item.product_name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      ${item.unit_price.toFixed(2)} c/u
+                      {formatCurrency(item.unit_price)} c/u
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
@@ -109,7 +110,7 @@ export function CartPanel({
                   </div>
                   <div className="w-16 text-right">
                     <span className="text-sm font-semibold text-foreground">
-                      ${item.subtotal.toFixed(2)}
+                      {formatCurrency(item.subtotal)}
                     </span>
                   </div>
                   <Button
@@ -129,24 +130,28 @@ export function CartPanel({
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Subtotal</span>
                 <span className="text-foreground">
-                  ${totals.subtotal.toFixed(2)}
+                  {formatCurrency(totals.subtotal)}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">IVA (16%)</span>
-                <span className="text-foreground">${totals.tax.toFixed(2)}</span>
+                <span className="text-foreground">
+                  {formatCurrency(totals.tax)}
+                </span>
               </div>
               {totals.discount > 0 && (
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">Descuento</span>
                   <span className="text-green-600">
-                    -${totals.discount.toFixed(2)}
+                    {formatCurrency(-totals.discount)}
                   </span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold pt-2 border-t border-border">
                 <span className="text-foreground">Total</span>
-                <span className="text-primary">${totals.total.toFixed(2)}</span>
+                <span className="text-primary">
+                  {formatCurrency(totals.total)}
+                </span>
               </div>
             </div>
 

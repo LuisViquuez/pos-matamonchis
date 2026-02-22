@@ -9,6 +9,7 @@ import {
   Legend,
   Tooltip,
 } from "recharts";
+import { formatCurrency } from "@/lib/utils";
 import type { PaymentMethodSummary } from "@/types/dto";
 
 interface PaymentMethodChartProps {
@@ -57,7 +58,10 @@ export function PaymentMethodChart({ data }: PaymentMethodChartProps) {
                 dataKey="value"
               >
                 {chartData.map((_, index) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  <Cell
+                    key={`cell-${index}`}
+                    fill={COLORS[index % COLORS.length]}
+                  />
                 ))}
               </Pie>
               <Tooltip
@@ -67,7 +71,7 @@ export function PaymentMethodChart({ data }: PaymentMethodChartProps) {
                   borderRadius: "8px",
                 }}
                 formatter={(value: number, name: string) => [
-                  `$${value.toFixed(2)}`,
+                  formatCurrency(value),
                   name,
                 ]}
               />

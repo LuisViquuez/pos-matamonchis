@@ -3,6 +3,7 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Package } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/models";
 
 interface ProductGridProps {
@@ -45,7 +46,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               </h3>
               <div className="flex items-center justify-between mt-2">
                 <span className="text-lg font-bold ">
-                  ${Number(product.price).toFixed(2)}
+                  {formatCurrency(product.price)}
                 </span>
                 <Button
                   size="icon"

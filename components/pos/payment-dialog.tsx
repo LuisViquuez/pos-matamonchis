@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Banknote, CreditCard, ArrowRightLeft, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 
 interface PaymentDialogProps {
   open: boolean;
@@ -21,7 +21,7 @@ interface PaymentDialogProps {
   onConfirm: (
     method: "cash" | "card" | "transfer",
     cashReceived?: number,
-    customerName?: string
+    customerName?: string,
   ) => void;
   isProcessing: boolean;
 }
@@ -39,13 +39,16 @@ export function PaymentDialog({
   onConfirm,
   isProcessing,
 }: PaymentDialogProps) {
-  const [selectedMethod, setSelectedMethod] = useState<"cash" | "card" | "transfer">("cash");
+  const [selectedMethod, setSelectedMethod] = useState<
+    "cash" | "card" | "transfer"
+  >("cash");
   const [cashReceived, setCashReceived] = useState("");
   const [customerName, setCustomerName] = useState("");
 
-  const change = selectedMethod === "cash" && cashReceived
-    ? Math.max(0, parseFloat(cashReceived) - total)
-    : 0;
+  const change =
+    selectedMethod === "cash" && cashReceived
+      ? Math.max(0, parseFloat(cashReceived) - total)
+      : 0;
 
   const canProceed =
     selectedMethod !== "cash" ||
@@ -55,7 +58,7 @@ export function PaymentDialog({
     onConfirm(
       selectedMethod,
       selectedMethod === "cash" ? parseFloat(cashReceived) : undefined,
-      customerName || undefined
+      customerName || undefined,
     );
   };
 
@@ -74,7 +77,10 @@ export function PaymentDialog({
         <DialogHeader>
           <DialogTitle>Procesar Pago</DialogTitle>
           <DialogDescription>
-            Total a cobrar: <span className="font-bold text-primary">${total.toFixed(2)}</span>
+            Total a cobrar:{" "}
+            <span className="font-bold text-primary">
+              {formatCurrency(total)}
+            </span>
           </DialogDescription>
         </DialogHeader>
 
@@ -104,7 +110,7 @@ export function PaymentDialog({
                     className={cn(
                       "h-20 flex-col gap-2",
                       selectedMethod === method.id &&
-                        "border-primary bg-primary/5 text-primary"
+                        "border-primary bg-primary/5 text-primary",
                     )}
                     onClick={() => setSelectedMethod(method.id)}
                     disabled={isProcessing}
@@ -135,11 +141,13 @@ export function PaymentDialog({
               {cashReceived && (
                 <div className="flex justify-between items-center pt-2 border-t border-border">
                   <span className="text-sm text-muted-foreground">Cambio</span>
-                  <span className={cn(
-                    "text-xl font-bold",
-                    change >= 0 ? "text-green-600" : "text-destructive"
-                  )}>
-                    ${change.toFixed(2)}
+                  <span
+                    className={cn(
+                      "text-xl font-bold",
+                      change >= 0 ? "text-green-600" : "text-destructive",
+                    )}
+                  >
+                    {formatCurrency(change)}
                   </span>
                 </div>
               )}

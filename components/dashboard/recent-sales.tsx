@@ -2,6 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/lib/utils";
 import type { Sale } from "@/types/models";
 
 interface RecentSalesTableProps {
@@ -26,7 +27,9 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
             <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mb-3">
               <span className="text-2xl">📋</span>
             </div>
-            <p className="text-muted-foreground">No hay ventas registradas hoy</p>
+            <p className="text-muted-foreground">
+              No hay ventas registradas hoy
+            </p>
             <p className="text-sm text-muted-foreground mt-1">
               Las ventas aparecerán aquí cuando se registren
             </p>
@@ -65,7 +68,10 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
             </thead>
             <tbody>
               {sales.map((sale) => (
-                <tr key={sale.id} className="border-b border-border/50 last:border-0">
+                <tr
+                  key={sale.id}
+                  className="border-b border-border/50 last:border-0"
+                >
                   <td className="py-3 px-2">
                     <span className="text-sm font-mono text-foreground">
                       #{sale.id}
@@ -83,7 +89,7 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
                   </td>
                   <td className="py-3 px-2 text-right">
                     <span className="text-sm font-semibold text-foreground">
-                      ${Number(sale.total).toLocaleString("es-MX", { minimumFractionDigits: 2 })}
+                      {formatCurrency(sale.total)}
                     </span>
                   </td>
                   <td className="py-3 px-2 text-right">

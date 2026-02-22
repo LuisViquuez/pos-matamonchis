@@ -1,7 +1,8 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { DollarSign, ShoppingBag, TrendingUp, Receipt } from "lucide-react";
+import { Banknote, ShoppingBag, TrendingUp, Receipt } from "lucide-react";
+import { formatCurrency } from "@/lib/utils";
 import type { DailySummary } from "@/types/dto";
 
 interface DashboardStatsProps {
@@ -18,10 +19,8 @@ export function DashboardStats({ summary }: DashboardStatsProps) {
   const stats = [
     {
       title: "Ventas del Día",
-      value: `$${safeSummary.total_sales.toLocaleString("es-MX", {
-        minimumFractionDigits: 2,
-      })}`,
-      icon: DollarSign,
+      value: formatCurrency(safeSummary.total_sales),
+      icon: Banknote,
       description: "Total en ventas hoy",
       color: "text-primary",
       bgColor: "bg-primary/10",
@@ -36,9 +35,7 @@ export function DashboardStats({ summary }: DashboardStatsProps) {
     },
     {
       title: "Ticket Promedio",
-      value: `$${safeSummary.average_ticket.toLocaleString("es-MX", {
-        minimumFractionDigits: 2,
-      })}`,
+      value: formatCurrency(safeSummary.average_ticket),
       icon: TrendingUp,
       description: "Promedio por venta",
       color: "text-chart-3",

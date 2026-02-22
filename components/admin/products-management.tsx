@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react"
+import React from "react";
 
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +28,7 @@ import {
   updateProductAction,
   deleteProductAction,
 } from "@/app/actions/products";
+import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/models";
 import type { CreateProductDTO, UpdateProductDTO } from "@/types/dto";
 
@@ -44,7 +45,9 @@ const categories = [
   "Dulces Típicos",
 ];
 
-export function ProductsManagement({ initialProducts }: ProductsManagementProps) {
+export function ProductsManagement({
+  initialProducts,
+}: ProductsManagementProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -54,7 +57,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase())
+      product.category.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const handleCreate = async (data: CreateProductDTO) => {
@@ -79,9 +82,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
     setIsSubmitting(true);
     const result = await updateProductAction(data);
     if (result.success) {
-      setProducts(
-        products.map((p) => (p.id === id ? { ...p, ...data } : p))
-      );
+      setProducts(products.map((p) => (p.id === id ? { ...p, ...data } : p)));
       setEditProduct(null);
     }
     setIsSubmitting(false);
@@ -89,7 +90,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
 
   const handleDelete = async (id: number) => {
     if (!confirm("¿Estás seguro de eliminar este producto?")) return;
-    
+
     const result = await deleteProductAction(id);
     if (result.success) {
       setProducts(products.filter((p) => p.id !== id));
@@ -187,7 +188,7 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
                       </td>
                       <td className="py-3 px-2 text-right">
                         <span className="text-sm font-semibold text-foreground">
-                          ₡{Number(product.price).toFixed(2)}
+                          {formatCurrency(product.price)}
                         </span>
                       </td>
                       <td className="py-3 px-2 text-right">
@@ -240,7 +241,9 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
           {editProduct && (
             <ProductForm
               initialData={editProduct}
-              onSubmit={(data: UpdateProductDTO) => handleUpdate(editProduct.id, data)}
+              onSubmit={(data: UpdateProductDTO) =>
+                handleUpdate(editProduct.id, data)
+              }
               isSubmitting={isSubmitting}
             />
           )}
@@ -251,19 +254,23 @@ export function ProductsManagement({ initialProducts }: ProductsManagementProps)
 }
 
 type createProductFormProps = {
-  initialData?: Product
+  initialData?: Product;
   onSubmit: (data: CreateProductDTO) => Promise<void>;
-}
+};
 type updateProductFormProps = {
-  initialData: Product
+  initialData: Product;
   onSubmit: (data: UpdateProductDTO) => Promise<void>;
-}
+};
 
 type ProductFormProps = (createProductFormProps | updateProductFormProps) & {
   isSubmitting: boolean;
-}
+};
 
-function ProductForm({ initialData, onSubmit, isSubmitting }: ProductFormProps) {
+function ProductForm({
+  initialData,
+  onSubmit,
+  isSubmitting,
+}: ProductFormProps) {
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     price: initialData?.price?.toString() || "",
@@ -304,7 +311,9 @@ function ProductForm({ initialData, onSubmit, isSubmitting }: ProductFormProps) 
             type="number"
             step="0.01"
             value={formData.price}
-            onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, price: e.target.value })
+            }
             required
           />
         </div>
@@ -314,7 +323,9 @@ function ProductForm({ initialData, onSubmit, isSubmitting }: ProductFormProps) 
             id="stock"
             type="number"
             value={formData.stock}
-            onChange={(e) => setFormData({ ...formData, stock: e.target.value })}
+            onChange={(e) =>
+              setFormData({ ...formData, stock: e.target.value })
+            }
             required
           />
         </div>
@@ -323,7 +334,9 @@ function ProductForm({ initialData, onSubmit, isSubmitting }: ProductFormProps) 
         <Label htmlFor="category">Categoría</Label>
         <Select
           value={formData.category}
-          onValueChange={(value) => setFormData({ ...formData, category: value })}
+          onValueChange={(value) =>
+            setFormData({ ...formData, category: value })
+          }
         >
           <SelectTrigger>
             <SelectValue />

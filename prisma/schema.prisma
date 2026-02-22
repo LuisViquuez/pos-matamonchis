@@ -112,3 +112,5 @@ model SaleItem {
 
   @@map("sale_items")
 }
+
+

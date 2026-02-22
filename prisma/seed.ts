@@ -14,7 +14,10 @@ async function main() {
   console.log("=== Iniciando Seed de LA MATAMONCHIS S.A ===");
 
   // 1. Usuarios (Admin y Cajero)
-  const adminPassword = "$2b$10$rQZ8K3.VqJ7Y5X2F1u8P8OzW9Y4L6N8M3A5B7C9D1E3F5G7H9I1J3";
+  // const adminPassword = "$2b$10$rQZ8K3.VqJ7Y5X2F1u8P8OzW9Y4L6N8M3A5B7C9D1E3F5G7H9I1J3";
+  const adminPassword =
+    "$2a$12$kmdqxQ6W.0fd2JdW5iHqh.evE1WGJvcLZATi05ykrhiUlyD0Ppjpi";
+    // admin123
 
   await prisma.user.upsert({
     where: { email: "admin@matamonchis.com" },
