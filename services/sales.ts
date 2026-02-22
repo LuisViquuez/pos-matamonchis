@@ -89,10 +89,27 @@ export async function createSale(
         },
       });
 
-      await tx.product.update({
-        where: { id: item.product_id },
+      // Atomic stock check + decrement — previene sobreventa en condiciones
+      // de carrera: solo decrementa si el stock sigue siendo suficiente.
+      const updated = await tx.product.updateMany({
+        where: {
+          id: item.product_id,
+          stock: { gte: item.quantity },
+        },
         data: { stock: { decrement: item.quantity } as any },
       });
+
+      if (updated.count === 0) {
+        // Consultar stock real para un mensaje de error preciso
+        const product = await tx.product.findUnique({
+          where: { id: item.product_id },
+          select: { name: true, stock: true },
+        });
+        throw new Error(
+          `Stock insuficiente para "${product?.name ?? `producto #${item.product_id}`}". ` +
+            `Disponible: ${product?.stock ?? 0} unidad(es)`,
+        );
+      }
     }
 
     return createdSale;

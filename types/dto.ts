@@ -112,6 +112,8 @@ export interface CartItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  /** Stock disponible del producto al momento de agregarlo al carrito */
+  stock: number;
   /** Descuento del ítem (calculado por el backend) */
   item_discount?: number;
   /** Nombre de la promoción aplicada al ítem */

@@ -12,7 +12,7 @@ import type {
   SaleWithItems,
   PromotionEvaluationResult,
 } from "@/types/dto";
-import { getActiveProducts } from "@/services/products";
+import { getActiveProducts, getProductById } from "@/services/products";
 
 export async function getProductsAction() {
   const products = await getActiveProducts();
@@ -78,7 +78,28 @@ export async function createSaleAction(
       })),
     };
 
-    // createSale ya decrementa el stock dentro de la transacción (services/sales.ts)
+    // Pre-validar stock disponible antes de iniciar la transacción
+    // (la transacción es la fuente de verdad, pero este check da un error
+    // más rápido y amigable para el cajero)
+    for (const item of verifiedData.items) {
+      const product = await getProductById(item.product_id);
+      if (!product || !product.is_active) {
+        return {
+          success: false,
+          error: `Producto "${item.product_name}" no encontrado o inactivo`,
+        };
+      }
+      if (product.stock < item.quantity) {
+        return {
+          success: false,
+          error:
+            `Stock insuficiente para "${item.product_name}". ` +
+            `Disponible: ${product.stock} unidad(es), solicitado: ${item.quantity}`,
+        };
+      }
+    }
+
+    // createSale decrementa el stock atómicamente dentro de la transacción
     const sale = await createSale(verifiedData, user.id);
 
     revalidatePath("/dashboard");
@@ -88,7 +109,10 @@ export async function createSaleAction(
     return { success: true, saleId: sale.id };
   } catch (error) {
     console.error("Error creating sale:", error);
-    return { success: false, error: "Error al procesar la venta" };
+    // Propagar mensaje específico (ej. stock insuficiente desde la transacción)
+    const message =
+      error instanceof Error ? error.message : "Error al procesar la venta";
+    return { success: false, error: message };
   }
 }
 

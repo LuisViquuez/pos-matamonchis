@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect, useRef } from "react";
+import { toast } from "sonner";
 import { ProductGrid } from "./product-grid";
 import { CartPanel } from "./cart-panel";
 import { CategoryFilter } from "./category-filter";
@@ -122,9 +123,24 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
 
   // ── Acciones del carrito ──
   const addToCart = (product: Product) => {
+    // Validación de stock: verificar unidades ya en carrito vs. stock disponible
+    const existing = cart.find((item) => item.product_id === product.id);
+    const currentQty = existing?.quantity ?? 0;
+
+    if (product.stock === 0) {
+      toast.error(`"${product.name}" está agotado`);
+      return;
+    }
+    if (currentQty >= product.stock) {
+      toast.error(
+        `Stock insuficiente para "${product.name}". Máximo: ${product.stock} unidad(es)`,
+      );
+      return;
+    }
+
     setCart((prev) => {
-      const existing = prev.find((item) => item.product_id === product.id);
-      if (existing) {
+      const existingItem = prev.find((item) => item.product_id === product.id);
+      if (existingItem) {
         return prev.map((item) =>
           item.product_id === product.id
             ? {
@@ -143,6 +159,7 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
           quantity: 1,
           unit_price: Number(product.price),
           subtotal: Number(product.price),
+          stock: product.stock,
         },
       ];
     });
@@ -151,6 +168,14 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
   const updateCartItem = (productId: number, quantity: number) => {
     if (quantity <= 0) {
       removeFromCart(productId);
+      return;
+    }
+    // Validar que la nueva cantidad no supere el stock disponible
+    const item = cart.find((i) => i.product_id === productId);
+    if (item && quantity > item.stock) {
+      toast.error(
+        `Solo hay ${item.stock} unidad(es) disponible(s) de "${item.product_name}"`,
+      );
       return;
     }
     setCart((prev) =>
@@ -202,9 +227,13 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
         setIsPaymentOpen(false);
         setIsReceiptOpen(true);
         clearCart();
+      } else {
+        // Mostrar error específico del backend (ej. stock insuficiente)
+        toast.error(result.error ?? "Error al procesar la venta");
       }
     } catch (error) {
       console.error("Payment error:", error);
+      toast.error("Ocurrió un error inesperado al procesar la venta");
     } finally {
       setIsProcessing(false);
     }

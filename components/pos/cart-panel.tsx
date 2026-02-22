@@ -15,6 +15,7 @@ import {
   Tag,
   Loader2,
   Info,
+  AlertCircle,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
@@ -209,6 +210,14 @@ export function CartPanel({
                           </span>
                         )}
                       </p>
+                      {/* Aviso de stock máximo alcanzado */}
+                      {item.stock !== undefined &&
+                        item.quantity >= item.stock && (
+                          <p className="text-[10px] text-amber-500 dark:text-amber-400 flex items-center gap-0.5 mt-0.5">
+                            <AlertCircle className="h-2.5 w-2.5 shrink-0" />
+                            Stock máximo
+                          </p>
+                        )}
                     </div>
                     <div className="flex items-center gap-1">
                       <Button
@@ -230,6 +239,16 @@ export function CartPanel({
                         className="h-7 w-7 bg-transparent"
                         onClick={() =>
                           onUpdateQuantity(item.product_id, item.quantity + 1)
+                        }
+                        disabled={
+                          item.stock !== undefined &&
+                          item.quantity >= item.stock
+                        }
+                        title={
+                          item.stock !== undefined &&
+                          item.quantity >= item.stock
+                            ? `Máximo stock: ${item.stock}`
+                            : undefined
                         }
                       >
                         <Plus className="h-3 w-3" />
