@@ -3,10 +3,10 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
-import type { Sale } from "@/types/models";
+import type { RecentSale } from "@/types/dto";
 
 interface RecentSalesTableProps {
-  sales: Sale[];
+  sales: RecentSale[];
 }
 
 const paymentMethodLabels: Record<string, string> = {

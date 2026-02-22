@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import type { CartItem } from "@/types/dto";
+import type { CartItem } from "@/types/dto"; // CartItem is defined in dto.ts
 
 interface CartPanelProps {
   items: CartItem[];

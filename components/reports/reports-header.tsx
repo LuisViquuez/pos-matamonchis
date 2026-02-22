@@ -24,10 +24,10 @@ export function ReportsHeader({ period, summary }: ReportsHeaderProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const safeSummary = {
-    total_sales: summary?.total_sales ?? 0,
-    total_transactions: summary?.total_transactions ?? 0,
-    average_ticket: summary?.average_ticket ?? 0,
-    items_sold: summary?.items_sold ?? 0,
+    total_sales: summary?.totalRevenue ?? 0,
+    total_transactions: summary?.totalSales ?? 0,
+    average_ticket: summary?.avgTicket ?? 0,
+    items_sold: summary?.totalProducts ?? 0,
   };
 
   const handlePeriodChange = (newPeriod: string) => {

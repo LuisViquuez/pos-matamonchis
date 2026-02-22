@@ -34,7 +34,7 @@ export function TopProductsTable({ products }: TopProductsTableProps) {
                     {product.product_name}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {product.total_quantity} unidades vendidas
+                    {product.quantity_sold} unidades vendidas
                   </p>
                 </div>
                 <div className="text-right">

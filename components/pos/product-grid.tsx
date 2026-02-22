@@ -35,7 +35,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
             className="group relative overflow-hidden border-border/50 hover:border-primary/50 transition-colors cursor-pointer"
             onClick={() => onAddToCart(product)}
           >
-            <div className="aspect-square bg-gradient-to-br from-primary/5 to-accent/10 flex items-center justify-center p-4">
+            <div className="aspect-square bg-linear-to-br from-primary/5 to-accent/10 flex items-center justify-center p-4">
               <span className="text-4xl">
                 {getCategoryEmoji(product.category)}
               </span>
