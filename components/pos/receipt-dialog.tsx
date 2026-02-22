@@ -102,7 +102,7 @@ export function ReceiptDialog({
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">IVA (16%)</span>
+                <span className="text-muted-foreground">IVA (13%)</span>
                 <span className="text-foreground">
                   {formatCurrency(sale.tax)}
                 </span>

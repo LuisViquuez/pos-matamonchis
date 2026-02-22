@@ -209,7 +209,7 @@ export async function getRecentSales(limit = 10): Promise<
       user_name: string;
     }[]
   >`
-    SELECT s.id, s.customer_name, s.total, s.payment_method, s.created_at, u.name as user_name
+    SELECT s.id, s.customer_name, s.total::float8 as total, s.payment_method, s.created_at::text as created_at, u.name as user_name
     FROM sales s
     LEFT JOIN users u ON s.user_id = u.id
     ORDER BY s.created_at DESC

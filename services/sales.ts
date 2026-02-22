@@ -5,6 +5,45 @@ import { requireAuth } from "@/lib/auth";
 import type { Sale, SaleItem, Promotion } from "@/types/models";
 import type { CreateSaleDTO } from "@/types/dto";
 
+// ── Serializers: convert Prisma Decimal → plain number so Next.js can pass
+// these objects from Server Components to Client Components safely. ──────────
+
+function serializeSale(sale: any): Sale {
+  // Construct a plain object with ONLY serializable fields — no Decimal objects.
+  return {
+    id: sale.id,
+    customer_id: sale.customerId ?? null,
+    user_id: sale.userId,
+    customer_name: sale.customerName ?? null,
+    subtotal: Number(sale.subtotal),
+    tax: Number(sale.tax),
+    discount: Number(sale.discount),
+    total: Number(sale.total),
+    payment_method: sale.paymentMethod,
+    cash_received: sale.cashReceived != null ? Number(sale.cashReceived) : null,
+    change_amount: sale.changeAmount != null ? Number(sale.changeAmount) : null,
+    created_at:
+      sale.createdAt instanceof Date
+        ? sale.createdAt.toISOString()
+        : sale.createdAt,
+    user_name: sale.user?.name ?? null,
+  } as unknown as Sale;
+}
+
+function serializeSaleItem(item: any): SaleItem {
+  // Construct a plain object with ONLY serializable fields — no Decimal objects.
+  return {
+    id: item.id,
+    sale_id: item.saleId,
+    product_id: item.productId,
+    product_name: item.productName,
+    quantity: item.quantity,
+    unit_price: Number(item.unitPrice),
+    subtotal: Number(item.subtotal),
+    promotion_applied: item.promotionApplied ?? null,
+  } as unknown as SaleItem;
+}
+
 export async function getPromotions(): Promise<Promotion[]> {
   await requireAuth();
 
@@ -70,7 +109,7 @@ export async function getSales(limit = 100): Promise<Sale[]> {
     orderBy: { createdAt: "desc" },
     take: limit,
   });
-  return sales as unknown as Sale[];
+  return sales.map(serializeSale);
 }
 
 export async function getSaleById(
@@ -84,8 +123,8 @@ export async function getSaleById(
   });
   if (!sale) return null;
   return {
-    sale: sale as unknown as Sale,
-    items: sale.items as unknown as SaleItem[],
+    sale: serializeSale(sale),
+    items: sale.items.map(serializeSaleItem),
   };
 }
 
@@ -100,12 +139,12 @@ export async function getSalesByDateRange(
     include: { user: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
   });
-  return sales as unknown as Sale[];
+  return sales.map(serializeSale);
 }
 
 export async function getSaleItems(saleId: number): Promise<SaleItem[]> {
   await requireAuth();
 
   const items = await prisma.saleItem.findMany({ where: { saleId } });
-  return items as unknown as SaleItem[];
+  return items.map(serializeSaleItem);
 }

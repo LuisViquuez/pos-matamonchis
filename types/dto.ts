@@ -112,7 +112,42 @@ export interface CartItem {
   quantity: number;
   unit_price: number;
   subtotal: number;
+  /** Descuento del ítem (calculado por el backend) */
+  item_discount?: number;
+  /** Nombre de la promoción aplicada al ítem */
+  promotion_applied?: string | null;
+  /** @deprecated use item_discount */
   discount?: number;
+}
+
+// ──────────────────────────────────────────────
+// Promotion evaluation DTOs (resultado del PromotionEngine)
+// ──────────────────────────────────────────────
+
+/** Ítem evaluado que devuelve el backend */
+export interface EvaluatedItemDTO {
+  product_id: number;
+  product_name: string;
+  quantity: number;
+  unit_price: number;
+  subtotal: number;
+  item_discount: number;
+  promotion_applied: string | null;
+}
+
+/** Resultado completo de evaluar las promociones de un carrito */
+export interface PromotionEvaluationResult {
+  items: EvaluatedItemDTO[];
+  subtotal: number;
+  promotion_discount: number;
+  custom_discount: number;
+  total_discount: number;
+  tax: number;
+  total: number;
+  active_promotion: "2x1" | "custom" | null;
+  promotion_message: string | null;
+  can_apply_custom_discount: boolean;
+  custom_discount_percent: number;
 }
 
 // Sale with items (for receipts)
