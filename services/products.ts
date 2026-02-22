@@ -12,12 +12,14 @@ import type { CreateProductDTO, UpdateProductDTO } from "@/types/dto";
 function serializeProduct(product: any): Product {
   if (!product) return product;
   return {
-    ...product,
-    // Convertimos el objeto Decimal a número de JS
+    id: product.id,
+    name: product.name,
     price: product.price ? Number(product.price) : 0,
-    // Aseguramos que las fechas sean strings o se mantengan como Date
-    // (Next.js acepta Dates planas, pero no objetos complejos)
-    createdAt:
+    category: product.category,
+    stock: product.stock,
+    image_url: product.imageUrl ?? null,
+    is_active: product.isActive,
+    created_at:
       product.createdAt instanceof Date
         ? product.createdAt.toISOString()
         : product.createdAt,
