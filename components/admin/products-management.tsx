@@ -36,14 +36,7 @@ interface ProductsManagementProps {
   initialProducts: Product[];
 }
 
-const categories = [
-  "Gomitas",
-  "Paletas",
-  "Chocolates",
-  "Chicles",
-  "Caramelos",
-  "Dulces Típicos",
-];
+const categories = ["Snacks", "Helados", "Comidas", "Postres", "Bebidas"];
 
 export function ProductsManagement({
   initialProducts,
@@ -271,6 +264,12 @@ function ProductForm({
   onSubmit,
   isSubmitting,
 }: ProductFormProps) {
+  const existingCategory = initialData?.category;
+  const allCategories =
+    existingCategory && !categories.includes(existingCategory)
+      ? [...categories, existingCategory]
+      : categories;
+
   const [formData, setFormData] = useState({
     name: initialData?.name || "",
     price: initialData?.price?.toString() || "",
@@ -342,7 +341,7 @@ function ProductForm({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {categories.map((cat) => (
+            {allCategories.map((cat) => (
               <SelectItem key={cat} value={cat}>
                 {cat}
               </SelectItem>

@@ -1,10 +1,13 @@
 import { PrismaClient, Prisma } from "@prisma/client";
-import { PrismaPg } from '@prisma/adapter-pg'
-import 'dotenv/config'
+import { PrismaPg } from "@prisma/adapter-pg";
+import "dotenv/config";
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-})
+const connectionString = (process.env.DATABASE_URL ?? "").replace(
+  /sslmode=(prefer|require|verify-ca)/,
+  "sslmode=verify-full",
+);
+
+const adapter = new PrismaPg({ connectionString });
 
 const prisma = new PrismaClient({
   adapter,
@@ -17,7 +20,7 @@ async function main() {
   // const adminPassword = "$2b$10$rQZ8K3.VqJ7Y5X2F1u8P8OzW9Y4L6N8M3A5B7C9D1E3F5G7H9I1J3";
   const adminPassword =
     "$2a$12$kmdqxQ6W.0fd2JdW5iHqh.evE1WGJvcLZATi05ykrhiUlyD0Ppjpi";
-    // admin123
+  // admin123
 
   await prisma.user.upsert({
     where: { email: "admin@matamonchis.com" },

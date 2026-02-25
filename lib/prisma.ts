@@ -5,9 +5,12 @@ const globalForPrisma = global as unknown as {
   prisma: PrismaClient;
 };
 
-const adapter = new PrismaPg({
-  connectionString: process.env.DATABASE_URL,
-});
+const connectionString = (process.env.DATABASE_URL ?? "").replace(
+  /sslmode=(prefer|require|verify-ca)/,
+  "sslmode=verify-full",
+);
+
+const adapter = new PrismaPg({ connectionString });
 
 const prisma =
   globalForPrisma.prisma ||
