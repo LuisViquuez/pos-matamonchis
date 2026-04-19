@@ -89,7 +89,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed top-0 left-0 z-50 h-full bg-card border-r border-border transition-[transform,width] duration-300 lg:static lg:z-auto lg:translate-x-0 lg:shrink-0 lg:h-screen",
+          "fixed top-0 left-0 z-50 h-full bg-card border-r border-border transition-[transform,width] duration-300 lg:z-40 lg:translate-x-0 lg:h-screen",
           isDesktopCollapsed ? "lg:w-20" : "lg:w-64",
           mobileMenuOpen ? "translate-x-0" : "-translate-x-full",
         )}
@@ -117,7 +117,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
             </div>
 
             {/* Navigation */}
-            <nav className="flex-1 p-3 space-y-1 overflow-y-auto">
+            <nav className="flex-1 p-3 space-y-1">
               {filteredItems.map((item) => {
                 const isActive = pathname === item.href;
                 const Icon = item.icon;
@@ -215,6 +215,15 @@ export function DashboardNav({ user }: DashboardNavProps) {
           </div>
         </div>
       </aside>
+
+      {/* Desktop spacer so content is always offset from fixed sidebar */}
+      <div
+        aria-hidden
+        className={cn(
+          "hidden lg:block lg:shrink-0 transition-[width] duration-300",
+          isDesktopCollapsed ? "lg:w-20" : "lg:w-64",
+        )}
+      />
 
       {/* Mobile spacer */}
       <div className="lg:hidden h-16" />

@@ -65,8 +65,19 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
 
     syncLatestProducts();
 
+    const handleVisibilityOrFocus = () => {
+      if (document.visibilityState === "visible") {
+        void syncLatestProducts();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityOrFocus);
+    window.addEventListener("focus", handleVisibilityOrFocus);
+
     return () => {
       cancelled = true;
+      document.removeEventListener("visibilitychange", handleVisibilityOrFocus);
+      window.removeEventListener("focus", handleVisibilityOrFocus);
     };
   }, []);
 
