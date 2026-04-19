@@ -125,6 +125,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   <Link
                     key={item.href}
                     href={item.href}
+                    prefetch={false}
                     onClick={() => setMobileMenuOpen(false)}
                     className={cn(
                       "flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors",

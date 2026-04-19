@@ -57,11 +57,13 @@ export function QuickActions({ isAdmin }: QuickActionsProps) {
               variant={action.primary ? "default" : "outline"}
               className="w-full justify-start h-auto py-3 px-4"
             >
-              <Link href={action.href}>
+              <Link href={action.href} prefetch={false}>
                 <Icon className="h-5 w-5 mr-3" />
                 <div className="text-left">
                   <div className="font-medium">{action.label}</div>
-                  <div className={`text-xs ${action.primary ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                  <div
+                    className={`text-xs ${action.primary ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+                  >
                     {action.description}
                   </div>
                 </div>

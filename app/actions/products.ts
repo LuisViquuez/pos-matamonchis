@@ -81,6 +81,7 @@ function parseProductFormData(formData: FormData, isUpdate = false) {
     })(),
     is_active: readBooleanField(formData, "is_active", true),
     imageFile: readProductImage(formData),
+    remove_image: readBooleanField(formData, "remove_image", false),
   };
 }
 
@@ -147,7 +148,8 @@ export async function updateProductAction(
       throw new Error("Producto no encontrado");
     }
 
-    let imageUrl = existing.image_url;
+    const shouldRemoveImage = data.remove_image && !data.imageFile;
+    let imageUrl = shouldRemoveImage ? null : existing.image_url;
     let newImageUrl: string | null = null;
 
     try {
@@ -167,6 +169,10 @@ export async function updateProductAction(
       });
 
       if (newImageUrl && existing.image_url) {
+        await deleteProductImage(existing.image_url);
+      }
+
+      if (shouldRemoveImage && existing.image_url) {
         await deleteProductImage(existing.image_url);
       }
 
@@ -196,10 +202,9 @@ export async function deleteProductAction(
 ): Promise<{ success: boolean; error?: string }> {
   try {
     await requireAdmin();
-    const existing = await getProductById(id);
-    await deleteProduct(id);
-    if (existing?.image_url) {
-      await deleteProductImage(existing.image_url);
+    const deletedImageUrl = await deleteProduct(id);
+    if (deletedImageUrl) {
+      await deleteProductImage(deletedImageUrl);
     }
     revalidatePath("/dashboard/products");
     revalidatePath("/dashboard/pos");

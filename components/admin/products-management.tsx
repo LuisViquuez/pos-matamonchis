@@ -2,7 +2,7 @@
 
 import React from "react";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -23,13 +23,21 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Edit, Trash2, Package, Loader2, ImageIcon } from "lucide-react";
+import {
+  Plus,
+  Edit,
+  Trash2,
+  Package,
+  Loader2,
+  ImageIcon,
+  RefreshCw,
+} from "lucide-react";
 import {
   createProductAction,
   updateProductAction,
   deleteProductAction,
 } from "@/app/actions/products";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/models";
 
 interface ProductsManagementProps {
@@ -52,11 +60,18 @@ export function ProductsManagement({
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isRefreshingList, startListRefresh] = useTransition();
   const router = useRouter();
 
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
+
+  useEffect(() => {
+    startListRefresh(() => {
+      router.refresh();
+    });
+  }, []);
 
   const filteredProducts = products.filter((product) => {
     if (statusFilter === "all") {
@@ -70,12 +85,21 @@ export function ProductsManagement({
     return !product.is_active;
   });
 
+  const handleRefreshList = () => {
+    startListRefresh(() => {
+      router.refresh();
+    });
+  };
+
   const handleCreate = async (formData: FormData) => {
     setIsSubmitting(true);
     const result = await createProductAction(formData);
     if (result.success && result.product) {
+      setProducts((current) => [result.product as Product, ...current]);
       setIsCreateOpen(false);
-      router.refresh();
+      startListRefresh(() => {
+        router.refresh();
+      });
     }
     setIsSubmitting(false);
   };
@@ -84,8 +108,15 @@ export function ProductsManagement({
     setIsSubmitting(true);
     const result = await updateProductAction(formData);
     if (result.success && result.product) {
+      setProducts((current) =>
+        current.map((product) =>
+          product.id === id ? (result.product as Product) : product,
+        ),
+      );
       setEditProduct(null);
-      router.refresh();
+      startListRefresh(() => {
+        router.refresh();
+      });
     }
     setIsSubmitting(false);
   };
@@ -96,7 +127,9 @@ export function ProductsManagement({
     const result = await deleteProductAction(id);
     if (result.success) {
       setProducts((current) => current.filter((p) => p.id !== id));
-      router.refresh();
+      startListRefresh(() => {
+        router.refresh();
+      });
     }
   };
 
@@ -108,6 +141,11 @@ export function ProductsManagement({
           <p className="text-muted-foreground">
             Gestiona el catálogo de productos
           </p>
+          {isRefreshingList && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Actualizando listados de productos...
+            </p>
+          )}
         </div>
         <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
           <DialogTrigger asChild>
@@ -127,9 +165,9 @@ export function ProductsManagement({
 
       <Card className="border-border/50">
         <CardHeader className="pb-3 space-y-3">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <CardTitle className="text-base">Listado de productos</CardTitle>
-            <div className="w-full sm:w-48">
+          <CardTitle className="text-base">Listado de productos</CardTitle>
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div className="">
               <Select
                 value={statusFilter}
                 onValueChange={(value) =>
@@ -150,6 +188,18 @@ export function ProductsManagement({
                 </SelectContent>
               </Select>
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleRefreshList}
+              disabled={isRefreshingList || isSubmitting}
+              className="w-full sm:w-auto"
+            >
+              <RefreshCw
+                className={cn(" h-4 w-4", isRefreshingList && "animate-spin")}
+              />
+              Refrescar listado
+            </Button>
           </div>
         </CardHeader>
         <CardContent>
@@ -313,9 +363,11 @@ function ProductForm({
   const [imagePreview, setImagePreview] = useState<string>(
     initialData?.image_url || "",
   );
+  const [removeCurrentImage, setRemoveCurrentImage] = useState(false);
   const [imageInputKey, setImageInputKey] = useState(0);
   const previewRef = useRef<string | null>(null);
-  const isUpdatingImage = isSubmitting && !!selectedImage;
+  const isUpdatingImage =
+    isSubmitting && (!!selectedImage || (removeCurrentImage && !!initialData));
 
   useEffect(() => {
     setFormData({
@@ -326,6 +378,7 @@ function ProductForm({
       is_active: initialData?.is_active ?? true,
     });
     setSelectedImage(null);
+    setRemoveCurrentImage(false);
     setImageInputKey((current) => current + 1);
     if (previewRef.current?.startsWith("blob:")) {
       URL.revokeObjectURL(previewRef.current);
@@ -346,6 +399,9 @@ function ProductForm({
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     setSelectedImage(file);
+    if (file) {
+      setRemoveCurrentImage(false);
+    }
 
     if (previewRef.current?.startsWith("blob:")) {
       URL.revokeObjectURL(previewRef.current);
@@ -359,7 +415,9 @@ function ProductForm({
       return;
     }
 
-    const fallbackPreview = initialData?.image_url || "";
+    const fallbackPreview = removeCurrentImage
+      ? ""
+      : initialData?.image_url || "";
     previewRef.current = fallbackPreview || null;
     setImagePreview(fallbackPreview);
   };
@@ -373,10 +431,38 @@ function ProductForm({
       previewRef.current = null;
     }
 
+    const fallbackPreview = removeCurrentImage
+      ? ""
+      : initialData?.image_url || "";
+    previewRef.current = fallbackPreview || null;
+    setImagePreview(fallbackPreview);
+  };
+
+  const handleToggleRemoveCurrentImage = () => {
+    const nextValue = !removeCurrentImage;
+    setRemoveCurrentImage(nextValue);
+
+    if (selectedImage) {
+      setSelectedImage(null);
+      setImageInputKey((current) => current + 1);
+    }
+
+    if (previewRef.current?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewRef.current);
+      previewRef.current = null;
+    }
+
+    if (nextValue) {
+      previewRef.current = null;
+      setImagePreview("");
+      return;
+    }
+
     const fallbackPreview = initialData?.image_url || "";
     previewRef.current = fallbackPreview || null;
     setImagePreview(fallbackPreview);
   };
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -394,6 +480,8 @@ function ProductForm({
     if (selectedImage) {
       payload.set("image", selectedImage);
     }
+
+    payload.set("remove_image", String(removeCurrentImage));
 
     await onSubmit(payload);
   };
@@ -504,11 +592,28 @@ function ProductForm({
                   Quitar archivo
                 </Button>
               ) : null}
+              {initialData?.image_url ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className={cn(
+                    "text-destructive hover:text-destructive",
+                    removeCurrentImage && "bg-destructive/10",
+                  )}
+                  onClick={handleToggleRemoveCurrentImage}
+                >
+                  {removeCurrentImage
+                    ? "Deshacer eliminación"
+                    : "Eliminar foto actual"}
+                </Button>
+              ) : null}
             </div>
             <p className="text-xs text-muted-foreground">
               {selectedImage
                 ? selectedImage.name
-                : "Ningún archivo seleccionado"}
+                : removeCurrentImage
+                  ? "La foto actual se eliminará al guardar"
+                  : "Ningún archivo seleccionado"}
             </p>
           </div>
         </div>
@@ -529,16 +634,11 @@ function ProductForm({
       )}
 
       <Button type="submit" className="w-full" disabled={isSubmitting}>
-        {isSubmitting ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Guardando...
-          </>
-        ) : initialData ? (
-          "Actualizar Producto"
-        ) : (
-          "Crear Producto"
-        )}
+        {isSubmitting
+          ? "Guardando..."
+          : initialData
+            ? "Actualizar Producto"
+            : "Crear Producto"}
       </Button>
     </form>
   );

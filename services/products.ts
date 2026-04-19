@@ -174,9 +174,19 @@ export async function updateProduct(data: UpdateProductDTO): Promise<Product> {
   return serializeProduct(result);
 }
 
-export async function deleteProduct(id: number): Promise<void> {
+export async function deleteProduct(id: number): Promise<string | null> {
   await requireAdmin();
-  await prisma.product.update({ where: { id }, data: { isActive: false } });
+  const existing = await prisma.product.findUnique({
+    where: { id },
+    select: { imageUrl: true },
+  });
+
+  await prisma.product.update({
+    where: { id },
+    data: { isActive: false, imageUrl: null },
+  });
+
+  return existing?.imageUrl ?? null;
 }
 
 export async function toggleProductStatus(id: number): Promise<Product> {
