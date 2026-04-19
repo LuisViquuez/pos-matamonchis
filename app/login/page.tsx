@@ -10,11 +10,15 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background via-secondary/30 to-accent/20 p-4">
+    <main className="min-h-screen flex items-center justify-center bg-linear-to-br from-background via-secondary/30 to-accent/20 p-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-[100px] h-[100px] rounded-2xl text-primary-foreground mb-4 shadow-lg">
-            <img src="/logos/sinfondo.png" className="rounded-full" alt="" />
+          <div className="inline-flex items-center justify-center w-40 h-40 rounded-3xl bg-card/70 mb-5 shadow-xl overflow-hidden p-5">
+            <img
+              src="/logos/sinfondo.png"
+              className="h-full w-full object-contain"
+              alt="La Matamonchis"
+            />
           </div>
           <h1 className="text-3xl font-bold text-foreground text-balance">
             LA MATAMONCHIS S.A.

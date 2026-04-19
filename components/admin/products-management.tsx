@@ -2,7 +2,8 @@
 
 import React from "react";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Edit, Trash2, Package, Loader2 } from "lucide-react";
+import { Plus, Edit, Trash2, Package, Loader2, ImageIcon } from "lucide-react";
 import {
   createProductAction,
   updateProductAction,
@@ -30,53 +31,61 @@ import {
 } from "@/app/actions/products";
 import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/models";
-import type { CreateProductDTO, UpdateProductDTO } from "@/types/dto";
 
 interface ProductsManagementProps {
   initialProducts: Product[];
 }
 
 const categories = ["Snacks", "Helados", "Comidas", "Postres", "Bebidas"];
+const statusFilters = [
+  { value: "active", label: "Activos" },
+  { value: "inactive", label: "Inactivos" },
+  { value: "all", label: "Todos" },
+] as const;
 
 export function ProductsManagement({
   initialProducts,
 }: ProductsManagementProps) {
   const [products, setProducts] = useState<Product[]>(initialProducts);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] =
+    useState<(typeof statusFilters)[number]["value"]>("active");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editProduct, setEditProduct] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const router = useRouter();
 
-  const filteredProducts = products.filter(
-    (product) =>
-      product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.category.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
 
-  const handleCreate = async (data: CreateProductDTO) => {
+  const filteredProducts = products.filter((product) => {
+    if (statusFilter === "all") {
+      return true;
+    }
+
+    if (statusFilter === "active") {
+      return product.is_active;
+    }
+
+    return !product.is_active;
+  });
+
+  const handleCreate = async (formData: FormData) => {
     setIsSubmitting(true);
-    const result = await createProductAction(data);
-    if (result.success) {
-      // Refresh products list by adding the new product
-      const newProduct: Product = {
-        id: Date.now(), // Temporary ID until page refresh
-        ...data,
-        image_url: data.image_url || null,
-        is_active: true,
-        created_at: new Date(),
-      };
-      setProducts([...products, newProduct]);
+    const result = await createProductAction(formData);
+    if (result.success && result.product) {
       setIsCreateOpen(false);
+      router.refresh();
     }
     setIsSubmitting(false);
   };
 
-  const handleUpdate = async (id: number, data: UpdateProductDTO) => {
+  const handleUpdate = async (id: number, formData: FormData) => {
     setIsSubmitting(true);
-    const result = await updateProductAction(data);
-    if (result.success) {
-      setProducts(products.map((p) => (p.id === id ? { ...p, ...data } : p)));
+    const result = await updateProductAction(formData);
+    if (result.success && result.product) {
       setEditProduct(null);
+      router.refresh();
     }
     setIsSubmitting(false);
   };
@@ -86,7 +95,8 @@ export function ProductsManagement({
 
     const result = await deleteProductAction(id);
     if (result.success) {
-      setProducts(products.filter((p) => p.id !== id));
+      setProducts((current) => current.filter((p) => p.id !== id));
+      router.refresh();
     }
   };
 
@@ -116,16 +126,29 @@ export function ProductsManagement({
       </div>
 
       <Card className="border-border/50">
-        <CardHeader className="pb-3">
-          <div className="flex items-center gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar productos..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+        <CardHeader className="pb-3 space-y-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <CardTitle className="text-base">Listado de productos</CardTitle>
+            <div className="w-full sm:w-48">
+              <Select
+                value={statusFilter}
+                onValueChange={(value) =>
+                  setStatusFilter(
+                    value as (typeof statusFilters)[number]["value"],
+                  )
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Filtrar por estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  {statusFilters.map((filter) => (
+                    <SelectItem key={filter.value} value={filter.value}>
+                      {filter.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardHeader>
@@ -172,9 +195,27 @@ export function ProductsManagement({
                       className="border-b border-border/50 last:border-0"
                     >
                       <td className="py-3 px-2">
-                        <span className="text-sm font-medium text-foreground">
-                          {product.name}
-                        </span>
+                        <div className="flex items-center gap-3">
+                          <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg border border-border bg-muted flex items-center justify-center">
+                            {product.image_url ? (
+                              <img
+                                src={product.image_url}
+                                alt={product.name}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                            )}
+                          </div>
+                          <div>
+                            <span className="text-sm font-medium text-foreground block">
+                              {product.name}
+                            </span>
+                            <span className="text-xs text-muted-foreground">
+                              {product.category}
+                            </span>
+                          </div>
+                        </div>
                       </td>
                       <td className="py-3 px-2">
                         <Badge variant="secondary">{product.category}</Badge>
@@ -234,9 +275,7 @@ export function ProductsManagement({
           {editProduct && (
             <ProductForm
               initialData={editProduct}
-              onSubmit={(data: UpdateProductDTO) =>
-                handleUpdate(editProduct.id, data)
-              }
+              onSubmit={(data: FormData) => handleUpdate(editProduct.id, data)}
               isSubmitting={isSubmitting}
             />
           )}
@@ -246,16 +285,9 @@ export function ProductsManagement({
   );
 }
 
-type createProductFormProps = {
+type ProductFormProps = {
   initialData?: Product;
-  onSubmit: (data: CreateProductDTO) => Promise<void>;
-};
-type updateProductFormProps = {
-  initialData: Product;
-  onSubmit: (data: UpdateProductDTO) => Promise<void>;
-};
-
-type ProductFormProps = (createProductFormProps | updateProductFormProps) & {
+  onSubmit: (data: FormData) => Promise<void>;
   isSubmitting: boolean;
 };
 
@@ -277,22 +309,106 @@ function ProductForm({
     stock: initialData?.stock?.toString() || "0",
     is_active: initialData?.is_active ?? true,
   });
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>(
+    initialData?.image_url || "",
+  );
+  const [imageInputKey, setImageInputKey] = useState(0);
+  const previewRef = useRef<string | null>(null);
+  const isUpdatingImage = isSubmitting && !!selectedImage;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    setFormData({
+      name: initialData?.name || "",
+      price: initialData?.price?.toString() || "",
+      category: initialData?.category || categories[0],
+      stock: initialData?.stock?.toString() || "0",
+      is_active: initialData?.is_active ?? true,
+    });
+    setSelectedImage(null);
+    setImageInputKey((current) => current + 1);
+    if (previewRef.current?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewRef.current);
+    }
+    const nextPreview = initialData?.image_url || "";
+    previewRef.current = nextPreview || null;
+    setImagePreview(nextPreview);
+  }, [initialData]);
+
+  useEffect(() => {
+    return () => {
+      if (previewRef.current?.startsWith("blob:")) {
+        URL.revokeObjectURL(previewRef.current);
+      }
+    };
+  }, []);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0] ?? null;
+    setSelectedImage(file);
+
+    if (previewRef.current?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewRef.current);
+      previewRef.current = null;
+    }
+
+    if (file) {
+      const previewUrl = URL.createObjectURL(file);
+      previewRef.current = previewUrl;
+      setImagePreview(previewUrl);
+      return;
+    }
+
+    const fallbackPreview = initialData?.image_url || "";
+    previewRef.current = fallbackPreview || null;
+    setImagePreview(fallbackPreview);
+  };
+
+  const handleClearImage = () => {
+    setSelectedImage(null);
+    setImageInputKey((current) => current + 1);
+
+    if (previewRef.current?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewRef.current);
+      previewRef.current = null;
+    }
+
+    const fallbackPreview = initialData?.image_url || "";
+    previewRef.current = fallbackPreview || null;
+    setImagePreview(fallbackPreview);
+  };
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    onSubmit({
-      id: initialData?.id || 0,
-      name: formData.name,
-      price: parseFloat(formData.price),
-      category: formData.category,
-      stock: parseInt(formData.stock),
-      is_active: formData.is_active,
-    });
+    const payload = new FormData();
+    payload.set("name", formData.name);
+    payload.set("price", formData.price);
+    payload.set("category", formData.category);
+    payload.set("stock", formData.stock);
+    payload.set("is_active", String(formData.is_active));
+
+    if (initialData) {
+      payload.set("id", String(initialData.id));
+    }
+
+    if (selectedImage) {
+      payload.set("image", selectedImage);
+    }
+
+    await onSubmit(payload);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4"
+      encType="multipart/form-data"
+    >
+      <input
+        type="hidden"
+        name="is_active"
+        value={String(formData.is_active)}
+      />
       <div className="space-y-2">
         <Label htmlFor="name">Nombre</Label>
         <Input
@@ -349,6 +465,69 @@ function ProductForm({
           </SelectContent>
         </Select>
       </div>
+      <div className="space-y-2">
+        <Label htmlFor="image">Imagen de portada</Label>
+        <div className="flex items-center gap-3">
+          <div className="h-16 w-16 shrink-0 overflow-hidden rounded-lg border border-border bg-muted flex items-center justify-center">
+            {imagePreview ? (
+              <img
+                src={imagePreview}
+                alt={formData.name || "Vista previa de la imagen"}
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <ImageIcon className="h-5 w-5 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex flex-col gap-2 flex-1">
+            <input
+              key={imageInputKey}
+              id="image"
+              name="image"
+              type="file"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <Button type="button" variant="outline" asChild>
+                <label htmlFor="image" className="cursor-pointer">
+                  Seleccionar archivo
+                </label>
+              </Button>
+              {selectedImage ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleClearImage}
+                >
+                  Quitar archivo
+                </Button>
+              ) : null}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {selectedImage
+                ? selectedImage.name
+                : "Ningún archivo seleccionado"}
+            </p>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Sube una portada en JPG, PNG, WEBP, GIF o AVIF. Tamaño máximo: 5 MB.
+        </p>
+      </div>
+
+      {isSubmitting && (
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span>
+            {isUpdatingImage
+              ? "Actualizando imagen, por favor espera..."
+              : "Guardando cambios, por favor espera..."}
+          </span>
+        </div>
+      )}
+
       <Button type="submit" className="w-full" disabled={isSubmitting}>
         {isSubmitting ? (
           <>

@@ -24,8 +24,7 @@ const COLORS = [
 
 const methodLabels: Record<string, string> = {
   cash: "Efectivo",
-  card: "Tarjeta",
-  transfer: "Transferencia",
+  sinpe: "SINPE",
 };
 
 export function PaymentMethodChart({ data }: PaymentMethodChartProps) {

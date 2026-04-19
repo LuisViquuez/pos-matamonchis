@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { ProductGrid } from "./product-grid";
 import { CartPanel } from "./cart-panel";
-import { CategoryFilter } from "./category-filter";
 import { PaymentDialog } from "./payment-dialog";
 import { ReceiptDialog } from "./receipt-dialog";
 import {
@@ -12,28 +11,28 @@ import {
   getSaleDetailsAction,
   evaluatePromotionsAction,
 } from "@/app/actions/sales";
+import { getActiveProductsListAction } from "@/app/actions/products";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Product } from "@/types/models";
 import type {
   CartItem,
   SaleWithItems,
   PromotionEvaluationResult,
 } from "@/types/dto";
-import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
 
 interface POSScreenProps {
   initialProducts: Product[];
 }
 
 export function POSScreen({ initialProducts }: POSScreenProps) {
-  const [products] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>(initialProducts);
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [searchQuery, setSearchQuery] = useState("");
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [lastSale, setLastSale] = useState<SaleWithItems | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isCartCollapsed, setIsCartCollapsed] = useState(false);
+  const isMobile = useIsMobile();
 
   // Promotion state — controlado 100% por el backend
   const [promotionResult, setPromotionResult] =
@@ -43,6 +42,33 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
 
   // Debounce ref para no saturar el servidor con llamadas
   const evalTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
+
+  useEffect(() => {
+    if (isMobile) {
+      setIsCartCollapsed(true);
+    }
+  }, [isMobile]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const syncLatestProducts = async () => {
+      const latestProducts = await getActiveProductsListAction();
+      if (!cancelled) {
+        setProducts(latestProducts);
+      }
+    };
+
+    syncLatestProducts();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // ── Evaluar promociones en el servidor cada vez que el carrito o el descuento cambian ──
   useEffect(() => {
@@ -86,24 +112,6 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
       if (evalTimer.current) clearTimeout(evalTimer.current);
     };
   }, [cart, customDiscountPercent]);
-
-  // ── Categorías únicas ──
-  const categories = useMemo(() => {
-    const cats = new Set(products.map((p) => p.category));
-    return ["all", ...Array.from(cats).sort()];
-  }, [products]);
-
-  // ── Productos filtrados ──
-  const filteredProducts = useMemo(() => {
-    return products.filter((product) => {
-      const matchesCategory =
-        selectedCategory === "all" || product.category === selectedCategory;
-      const matchesSearch =
-        searchQuery === "" ||
-        product.name.toLowerCase().includes(searchQuery.toLowerCase());
-      return matchesCategory && matchesSearch;
-    });
-  }, [products, selectedCategory, searchQuery]);
 
   // ── Totales: siempre preferir el resultado del backend ──
   const displayTotals = useMemo(() => {
@@ -199,7 +207,7 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
 
   // ── Pago: envía customDiscountPercent al backend para re-validación ──
   const handlePayment = async (
-    paymentMethod: "cash" | "card" | "transfer",
+    paymentMethod: "cash" | "sinpe",
     cashReceived?: number,
     customerName?: string,
   ) => {
@@ -243,24 +251,7 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
     <div className="flex flex-col lg:flex-row gap-4 h-[calc(100vh-8rem)] lg:h-[calc(100vh-6rem)]">
       {/* Products section */}
       <div className="flex-1 flex flex-col min-h-0 order-2 lg:order-1">
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar productos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9 bg-card"
-            />
-          </div>
-          <CategoryFilter
-            categories={categories}
-            selected={selectedCategory}
-            onSelect={setSelectedCategory}
-          />
-        </div>
-
-        <ProductGrid products={filteredProducts} onAddToCart={addToCart} />
+        <ProductGrid products={products} onAddToCart={addToCart} />
       </div>
 
       {/* Cart section */}
@@ -276,6 +267,8 @@ export function POSScreen({ initialProducts }: POSScreenProps) {
           onRemove={removeFromCart}
           onClear={clearCart}
           onCheckout={() => setIsPaymentOpen(true)}
+          isCollapsed={isCartCollapsed}
+          onToggleCollapse={() => setIsCartCollapsed((current) => !current)}
         />
       </div>
 

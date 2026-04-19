@@ -80,7 +80,7 @@ export const createSaleSchema = z.object({
   tax: z.number(),
   discount: z.number(),
   total: z.number(),
-  payment_method: z.enum(["cash", "card", "transfer"]),
+  payment_method: z.enum(["cash", "sinpe"]),
   cash_received: z.number().nullable().optional(),
   change_amount: z.number().nullable().optional(),
   items: z.array(saleItemSchema).min(1, "Se requiere al menos un artículo"),

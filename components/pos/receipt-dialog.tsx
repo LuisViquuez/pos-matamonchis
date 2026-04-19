@@ -19,8 +19,7 @@ interface ReceiptDialogProps {
 
 const paymentMethodLabels: Record<string, string> = {
   cash: "Efectivo",
-  card: "Tarjeta",
-  transfer: "Transferencia",
+  sinpe: "SINPE",
 };
 
 export function ReceiptDialog({
@@ -70,21 +69,17 @@ export function ReceiptDialog({
             {/* Items */}
             <div className="space-y-2">
               <div className="text-xs text-muted-foreground grid grid-cols-12 pb-1 border-b border-border">
-                <span className="col-span-6">Producto</span>
+                <span className="col-span-8">Producto</span>
                 <span className="col-span-2 text-center">Cant</span>
-                <span className="col-span-2 text-right">Precio</span>
                 <span className="col-span-2 text-right">Total</span>
               </div>
               {sale.items?.map((item, index) => (
                 <div key={index} className="text-sm grid grid-cols-12">
-                  <span className="col-span-6 text-foreground truncate">
+                  <span className="col-span-8 text-foreground truncate">
                     {item.product_name}
                   </span>
                   <span className="col-span-2 text-center text-muted-foreground">
                     {item.quantity}
-                  </span>
-                  <span className="col-span-2 text-right text-muted-foreground">
-                    {formatCurrency(item.unit_price)}
                   </span>
                   <span className="col-span-2 text-right text-foreground">
                     {formatCurrency(item.subtotal)}
@@ -128,7 +123,8 @@ export function ReceiptDialog({
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Método de pago</span>
                 <span className="text-foreground">
-                  {paymentMethodLabels[sale.payment_method]}
+                  {paymentMethodLabels[sale.payment_method] ??
+                    sale.payment_method}
                 </span>
               </div>
               {sale.payment_method === "cash" && sale.cash_received && (

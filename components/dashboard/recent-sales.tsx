@@ -11,8 +11,7 @@ interface RecentSalesTableProps {
 
 const paymentMethodLabels: Record<string, string> = {
   cash: "Efectivo",
-  card: "Tarjeta",
-  transfer: "Transferencia",
+  sinpe: "SINPE",
 };
 
 export function RecentSalesTable({ sales }: RecentSalesTableProps) {
@@ -84,7 +83,8 @@ export function RecentSalesTable({ sales }: RecentSalesTableProps) {
                   </td>
                   <td className="py-3 px-2">
                     <Badge variant="secondary" className="font-normal">
-                      {paymentMethodLabels[sale.payment_method]}
+                      {paymentMethodLabels[sale.payment_method] ??
+                        sale.payment_method}
                     </Badge>
                   </td>
                   <td className="py-3 px-2 text-right">

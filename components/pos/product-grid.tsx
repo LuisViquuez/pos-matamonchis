@@ -25,7 +25,7 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
         </div>
         <p className="text-lg font-medium text-foreground">No hay productos</p>
         <p className="text-sm text-muted-foreground mt-1">
-          No se encontraron productos con los filtros seleccionados
+          No hay productos disponibles para mostrar
         </p>
       </div>
     );
@@ -50,7 +50,6 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
               )}
               onClick={() => !isOutOfStock && onAddToCart(product)}
             >
-              {/* Out-of-stock overlay */}
               {isOutOfStock && (
                 <div className="absolute inset-0 z-10 flex items-center justify-center bg-background/60 backdrop-blur-[1px]">
                   <Badge
@@ -62,10 +61,20 @@ export function ProductGrid({ products, onAddToCart }: ProductGridProps) {
                 </div>
               )}
 
-              <div className="aspect-square bg-linear-to-br from-primary/5 to-accent/10 flex items-center justify-center p-4">
-                <span className="text-4xl">
-                  {getCategoryEmoji(product.category)}
-                </span>
+              <div className="aspect-square bg-linear-to-br from-primary/5 to-accent/10 overflow-hidden">
+                {product.image_url ? (
+                  <img
+                    src={product.image_url}
+                    alt={product.name}
+                    className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="h-full w-full flex items-center justify-center p-4">
+                    <span className="text-4xl">
+                      {getCategoryEmoji(product.category)}
+                    </span>
+                  </div>
+                )}
               </div>
               <div className="p-3">
                 <h3 className="font-medium text-sm text-foreground line-clamp-2 leading-tight">

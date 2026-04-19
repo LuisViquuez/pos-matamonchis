@@ -1,9 +1,28 @@
 "use server";
 
+import { mkdir, unlink, writeFile } from "fs/promises";
+import path from "path";
+import { randomUUID } from "crypto";
 import prisma from "@/lib/prisma";
 import { requireAuth, requireAdmin } from "@/lib/auth";
 import type { Product } from "@/types/models";
 import type { CreateProductDTO, UpdateProductDTO } from "@/types/dto";
+
+const PRODUCT_UPLOAD_DIRECTORY = path.join(
+  process.cwd(),
+  "public",
+  "uploads",
+  "products",
+);
+const PRODUCT_UPLOAD_PUBLIC_PATH = "/uploads/products";
+const MAX_PRODUCT_IMAGE_SIZE = 5 * 1024 * 1024;
+const ALLOWED_IMAGE_TYPES: Record<string, string> = {
+  "image/jpeg": ".jpg",
+  "image/png": ".png",
+  "image/webp": ".webp",
+  "image/gif": ".gif",
+  "image/avif": ".avif",
+};
 
 /**
  * Función auxiliar para convertir Decimal de Prisma y fechas
@@ -24,6 +43,53 @@ function serializeProduct(product: any): Product {
         ? product.createdAt.toISOString()
         : product.createdAt,
   } as Product;
+}
+
+async function ensureProductUploadDirectory() {
+  await mkdir(PRODUCT_UPLOAD_DIRECTORY, { recursive: true });
+}
+
+function isLocalProductImage(imageUrl?: string | null) {
+  return !!imageUrl && imageUrl.startsWith(`${PRODUCT_UPLOAD_PUBLIC_PATH}/`);
+}
+
+function getLocalProductImagePath(imageUrl: string) {
+  return path.join(process.cwd(), "public", imageUrl.replace(/^\//, ""));
+}
+
+export async function saveProductImage(file: File): Promise<string> {
+  if (!(file.type in ALLOWED_IMAGE_TYPES)) {
+    throw new Error("La imagen debe ser JPG, PNG, WEBP, GIF o AVIF");
+  }
+
+  if (file.size > MAX_PRODUCT_IMAGE_SIZE) {
+    throw new Error("La imagen no puede pesar más de 5 MB");
+  }
+
+  await ensureProductUploadDirectory();
+
+  const extension = ALLOWED_IMAGE_TYPES[file.type];
+  const fileName = `${randomUUID()}${extension}`;
+  const filePath = path.join(PRODUCT_UPLOAD_DIRECTORY, fileName);
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  await writeFile(filePath, buffer);
+
+  return `${PRODUCT_UPLOAD_PUBLIC_PATH}/${fileName}`;
+}
+
+export async function deleteProductImage(imageUrl?: string | null) {
+  if (!isLocalProductImage(imageUrl)) {
+    return;
+  }
+
+  const filePath = getLocalProductImagePath(imageUrl);
+
+  try {
+    await unlink(filePath);
+  } catch {
+    // Ignore missing files so cleanup stays best-effort.
+  }
 }
 
 export async function getProducts(includeInactive = false): Promise<Product[]> {
