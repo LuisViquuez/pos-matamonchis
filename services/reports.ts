@@ -9,6 +9,16 @@ import type {
   DailySalesReport,
 } from "@/types/models";
 
+function toNumber(value: unknown): number {
+  if (typeof value === "number") return value;
+  if (typeof value === "string") return Number(value);
+  if (value && typeof value === "object" && "toNumber" in value) {
+    const decimalValue = value as { toNumber: () => number };
+    return decimalValue.toNumber();
+  }
+  return Number(value ?? 0);
+}
+
 export async function getSalesByPaymentMethod(
   startDate?: string,
   endDate?: string,
@@ -16,22 +26,32 @@ export async function getSalesByPaymentMethod(
   await requireAdmin();
 
   if (startDate && endDate) {
-    return (await prisma.$queryRaw<SalesByPaymentMethod[]>`
+    const rows = await prisma.$queryRaw<SalesByPaymentMethod[]>`
       SELECT payment_method, COUNT(*)::int as count, COALESCE(SUM(total),0)::numeric as total
       FROM sales
       WHERE created_at >= ${startDate}::timestamp
       AND created_at <= ${endDate}::timestamp
       GROUP BY payment_method
       ORDER BY total DESC
-    `) as SalesByPaymentMethod[];
+    `;
+
+    return rows.map((row) => ({
+      ...row,
+      total: toNumber(row.total),
+    }));
   }
 
-  return (await prisma.$queryRaw<SalesByPaymentMethod[]>`
+  const rows = await prisma.$queryRaw<SalesByPaymentMethod[]>`
     SELECT payment_method, COUNT(*)::int as count, COALESCE(SUM(total),0)::numeric as total
     FROM sales
     GROUP BY payment_method
     ORDER BY total DESC
-  `) as SalesByPaymentMethod[];
+  `;
+
+  return rows.map((row) => ({
+    ...row,
+    total: toNumber(row.total),
+  }));
 }
 
 export async function getProductSalesReport(
@@ -40,7 +60,7 @@ export async function getProductSalesReport(
 ): Promise<ProductSalesReport[]> {
   await requireAdmin();
   if (startDate && endDate) {
-    return (await prisma.$queryRaw<ProductSalesReport[]>`
+    const rows = await prisma.$queryRaw<ProductSalesReport[]>`
       SELECT si.product_id, si.product_name, SUM(si.quantity)::int as quantity_sold, COALESCE(SUM(si.subtotal),0)::numeric as total_revenue
       FROM sale_items si
       JOIN sales s ON si.sale_id = s.id
@@ -48,15 +68,25 @@ export async function getProductSalesReport(
       AND s.created_at <= ${endDate}::timestamp
       GROUP BY si.product_id, si.product_name
       ORDER BY total_revenue DESC
-    `) as ProductSalesReport[];
+    `;
+
+    return rows.map((row) => ({
+      ...row,
+      total_revenue: toNumber(row.total_revenue),
+    }));
   }
 
-  return (await prisma.$queryRaw<ProductSalesReport[]>`
+  const rows = await prisma.$queryRaw<ProductSalesReport[]>`
     SELECT si.product_id, si.product_name, SUM(si.quantity)::int as quantity_sold, COALESCE(SUM(si.subtotal),0)::numeric as total_revenue
     FROM sale_items si
     GROUP BY si.product_id, si.product_name
     ORDER BY total_revenue DESC
-  `) as ProductSalesReport[];
+  `;
+
+  return rows.map((row) => ({
+    ...row,
+    total_revenue: toNumber(row.total_revenue),
+  }));
 }
 
 export async function getSalesByUser(
@@ -65,7 +95,7 @@ export async function getSalesByUser(
 ): Promise<SalesByUser[]> {
   await requireAdmin();
   if (startDate && endDate) {
-    return (await prisma.$queryRaw<SalesByUser[]>`
+    const rows = await prisma.$queryRaw<SalesByUser[]>`
       SELECT s.user_id, u.name as user_name, COUNT(*)::int as sale_count, COALESCE(SUM(s.total),0)::numeric as total_sales
       FROM sales s
       JOIN users u ON s.user_id = u.id
@@ -73,16 +103,26 @@ export async function getSalesByUser(
       AND s.created_at <= ${endDate}::timestamp
       GROUP BY s.user_id, u.name
       ORDER BY total_sales DESC
-    `) as SalesByUser[];
+    `;
+
+    return rows.map((row) => ({
+      ...row,
+      total_sales: toNumber(row.total_sales),
+    }));
   }
 
-  return (await prisma.$queryRaw<SalesByUser[]>`
+  const rows = await prisma.$queryRaw<SalesByUser[]>`
     SELECT s.user_id, u.name as user_name, COUNT(*)::int as sale_count, COALESCE(SUM(s.total),0)::numeric as total_sales
     FROM sales s
     JOIN users u ON s.user_id = u.id
     GROUP BY s.user_id, u.name
     ORDER BY total_sales DESC
-  `) as SalesByUser[];
+  `;
+
+  return rows.map((row) => ({
+    ...row,
+    total_sales: toNumber(row.total_sales),
+  }));
 }
 
 export async function getDailySalesReport(
@@ -91,23 +131,33 @@ export async function getDailySalesReport(
 ): Promise<DailySalesReport[]> {
   await requireAdmin();
   if (startDate && endDate) {
-    return (await prisma.$queryRaw<DailySalesReport[]>`
+    const rows = await prisma.$queryRaw<DailySalesReport[]>`
       SELECT DATE(created_at)::text as date, COUNT(*)::int as count, COALESCE(SUM(total),0)::numeric as total
       FROM sales
       WHERE created_at >= ${startDate}::timestamp
       AND created_at <= ${endDate}::timestamp
       GROUP BY DATE(created_at)
       ORDER BY date DESC
-    `) as DailySalesReport[];
+    `;
+
+    return rows.map((row) => ({
+      ...row,
+      total: toNumber(row.total),
+    }));
   }
 
-  return (await prisma.$queryRaw<DailySalesReport[]>`
+  const rows = await prisma.$queryRaw<DailySalesReport[]>`
     SELECT DATE(created_at)::text as date, COUNT(*)::int as count, COALESCE(SUM(total),0)::numeric as total
     FROM sales
     GROUP BY DATE(created_at)
     ORDER BY date DESC
     LIMIT 30
-  `) as DailySalesReport[];
+  `;
+
+  return rows.map((row) => ({
+    ...row,
+    total: toNumber(row.total),
+  }));
 }
 
 export async function getTotalSalesStats(
@@ -249,9 +299,8 @@ export async function getTopProducts(
 ): Promise<ProductSalesReport[]> {
   await requireAdmin();
 
-  let query;
   if (startDate && endDate) {
-    query = await sql`
+    const rows = await prisma.$queryRaw<ProductSalesReport[]>`
       SELECT 
         si.product_id,
         si.product_name,
@@ -265,8 +314,14 @@ export async function getTopProducts(
       ORDER BY total_revenue DESC
       LIMIT ${limit}
     `;
-  } else {
-    query = await sql`
+
+    return rows.map((row) => ({
+      ...row,
+      total_revenue: toNumber(row.total_revenue),
+    }));
+  }
+
+  const rows = await prisma.$queryRaw<ProductSalesReport[]>`
       SELECT 
         si.product_id,
         si.product_name,
@@ -277,9 +332,11 @@ export async function getTopProducts(
       ORDER BY total_revenue DESC
       LIMIT ${limit}
     `;
-  }
 
-  return query as ProductSalesReport[];
+  return rows.map((row) => ({
+    ...row,
+    total_revenue: toNumber(row.total_revenue),
+  }));
 }
 
 export async function getSalesByHour(
@@ -294,9 +351,10 @@ export async function getSalesByHour(
 > {
   await requireAdmin();
 
-  let query;
   if (startDate && endDate) {
-    query = await sql`
+    const rows = await prisma.$queryRaw<
+      { hour: number; count: number; total: number }[]
+    >`
       SELECT 
         EXTRACT(HOUR FROM created_at)::int as hour,
         COUNT(*)::int as count,
@@ -307,8 +365,16 @@ export async function getSalesByHour(
       GROUP BY EXTRACT(HOUR FROM created_at)
       ORDER BY hour
     `;
-  } else {
-    query = await sql`
+
+    return rows.map((row) => ({
+      ...row,
+      total: toNumber(row.total),
+    }));
+  }
+
+  const rows = await prisma.$queryRaw<
+    { hour: number; count: number; total: number }[]
+  >`
       SELECT 
         EXTRACT(HOUR FROM created_at)::int as hour,
         COUNT(*)::int as count,
@@ -317,7 +383,9 @@ export async function getSalesByHour(
       GROUP BY EXTRACT(HOUR FROM created_at)
       ORDER BY hour
     `;
-  }
 
-  return query as { hour: number; count: number; total: number }[];
+  return rows.map((row) => ({
+    ...row,
+    total: toNumber(row.total),
+  }));
 }

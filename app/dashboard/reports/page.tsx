@@ -4,31 +4,37 @@ import {
   getTopProducts,
   getSalesByPaymentMethod,
   getSalesByHour,
+  getSalesByUser,
 } from "@/services/reports";
 import { ReportsHeader } from "@/components/reports/reports-header";
 import { SalesChart } from "@/components/reports/sales-chart";
 import { TopProductsTable } from "@/components/reports/top-products-table";
 import { PaymentMethodChart } from "@/components/reports/payment-method-chart";
 import { HourlySalesChart } from "@/components/reports/hourly-sales-chart";
+import { SalesByPaymentType } from "@/components/reports/sales-by-payment-type";
+import { SalesByUser } from "@/components/reports/sales-by-user";
 
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 
 interface ReportsPageProps {
-  searchParams: Promise<{ period?: string; startDate?: string; endDate?: string }>;
+  searchParams: Promise<{
+    period?: string;
+    startDate?: string;
+    endDate?: string;
+  }>;
 }
 
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
   await requireAuth();
-  
-  
+
   const params = await searchParams;
   const period = params.period || "today";
-  
+
   // Calculate date range based on period
   const now = new Date();
   let startDate: Date;
   let endDate: Date = now;
-  
+
   switch (period) {
     case "week":
       startDate = new Date(now);
@@ -39,7 +45,9 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       startDate.setMonth(now.getMonth() - 1);
       break;
     case "custom":
-      startDate = params.startDate ? new Date(params.startDate) : new Date(now.setDate(now.getDate() - 7));
+      startDate = params.startDate
+        ? new Date(params.startDate)
+        : new Date(now.setDate(now.getDate() - 7));
       endDate = params.endDate ? new Date(params.endDate) : new Date();
       break;
     default: // today
@@ -47,12 +55,14 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       startDate.setHours(0, 0, 0, 0);
   }
 
-  const [salesReport, topProducts, paymentMethods, hourlySales] = await Promise.all([
-    getSalesReport(startDate, endDate),
-    getTopProducts(10, startDate, endDate),
-    getSalesByPaymentMethod(startDate, endDate),
-    getSalesByHour(startDate, endDate),
-  ]);
+  const [salesReport, topProducts, paymentMethods, hourlySales, userSales] =
+    await Promise.all([
+      getSalesReport(startDate, endDate),
+      getTopProducts(10, startDate, endDate),
+      getSalesByPaymentMethod(startDate, endDate),
+      getSalesByHour(startDate, endDate),
+      getSalesByUser(startDate.toISOString(), endDate.toISOString()),
+    ]);
 
   return (
     <div className="space-y-6">
@@ -71,6 +81,11 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       <div className="grid gap-6 lg:grid-cols-2">
         <TopProductsTable products={topProducts} />
         <HourlySalesChart data={hourlySales} />
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <SalesByPaymentType data={paymentMethods} />
+        <SalesByUser data={userSales} />
       </div>
     </div>
   );
