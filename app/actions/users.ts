@@ -2,14 +2,22 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/app/actions/auth";
-import { hashPassword } from "@/lib/auth";
 import {
   getAllUsers,
   createUser,
   updateUser,
   toggleUserStatus,
 } from "@/services/users";
-import type { CreateUserDTO, UpdateUserDTO } from "@/types/dto";
+import type { User } from "@/types/models";
+import {
+  createUserSchema,
+  updateUserSchema,
+  type CreateUserDTO,
+  type UpdateUserDTO,
+} from "@/types/dto";
+import { ZodError } from "zod";
+
+type SafeUser = Omit<User, "password_hash">;
 
 export async function getUsersListAction() {
   await requireAdmin();
@@ -17,24 +25,30 @@ export async function getUsersListAction() {
 }
 
 export async function createUserAction(
-  data: CreateUserDTO
-): Promise<{ success: boolean; error?: string }> {
+  data: CreateUserDTO,
+): Promise<{ success: boolean; error?: string; user?: SafeUser }> {
   try {
     await requireAdmin();
-    
-    const passwordHash = await hashPassword(data.password);
-    await createUser({
-      name: data.name,
-      email: data.email,
-      password_hash: passwordHash,
-      role: data.role,
-    });
-    
+
+    const validatedData = createUserSchema.parse(data);
+
+    const user = await createUser(validatedData);
+
     revalidatePath("/dashboard/users");
-    return { success: true };
+    return { success: true, user };
   } catch (error) {
     console.error("Error creating user:", error);
-    if (error instanceof Error && error.message.includes("duplicate")) {
+    if (error instanceof ZodError) {
+      return {
+        success: false,
+        error: error.issues[0]?.message ?? "Datos inválidos",
+      };
+    }
+    if (
+      error instanceof Error &&
+      (error.message.includes("Email already exists") ||
+        error.message.includes("duplicate"))
+    ) {
       return { success: false, error: "El correo ya está registrado" };
     }
     return { success: false, error: "Error al crear el usuario" };
@@ -43,35 +57,49 @@ export async function createUserAction(
 
 export async function updateUserAction(
   id: number,
-  data: UpdateUserDTO
-): Promise<{ success: boolean; error?: string }> {
+  data: Omit<UpdateUserDTO, "id">,
+): Promise<{ success: boolean; error?: string; user?: SafeUser }> {
   try {
     await requireAdmin();
-    
-    const updateData: Record<string, unknown> = {
-      name: data.name,
-      email: data.email,
-      role: data.role,
-    };
-    
-    if (data.password) {
-      updateData.password_hash = await hashPassword(data.password);
-    }
-    
-    await updateUser(id, updateData);
+
+    const validatedData = updateUserSchema.parse({ id, ...data });
+
+    const user = await updateUser(validatedData);
+
     revalidatePath("/dashboard/users");
-    return { success: true };
+    return { success: true, user };
   } catch (error) {
     console.error("Error updating user:", error);
+    if (error instanceof ZodError) {
+      return {
+        success: false,
+        error: error.issues[0]?.message ?? "Datos inválidos",
+      };
+    }
+    if (
+      error instanceof Error &&
+      (error.message.includes("Email already exists") ||
+        error.message.includes("duplicate"))
+    ) {
+      return { success: false, error: "El correo ya está registrado" };
+    }
     return { success: false, error: "Error al actualizar el usuario" };
   }
 }
 
 export async function toggleUserStatusAction(
-  id: number
+  id: number,
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    await requireAdmin();
+    const currentUser = await requireAdmin();
+
+    if (currentUser.id === id) {
+      return {
+        success: false,
+        error: "No puedes cambiar tu propio estado",
+      };
+    }
+
     await toggleUserStatus(id);
     revalidatePath("/dashboard/users");
     return { success: true };

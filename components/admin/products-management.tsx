@@ -51,6 +51,10 @@ const statusFilters = [
   { value: "all", label: "Todos" },
 ] as const;
 
+const MAX_PRODUCT_NAME_LENGTH = 30;
+const MAX_PRODUCT_VALUE = 999_999;
+const MAX_PRICE_DECIMALS = 2;
+
 export function ProductsManagement({
   initialProducts,
 }: ProductsManagementProps) {
@@ -396,6 +400,56 @@ function ProductForm({
     };
   }, []);
 
+  const handleNameChange = (value: string) => {
+    setFormData((current) => ({
+      ...current,
+      name: value.slice(0, MAX_PRODUCT_NAME_LENGTH),
+    }));
+  };
+
+  const handlePriceChange = (value: string) => {
+    if (value === "") {
+      setFormData((current) => ({ ...current, price: "" }));
+      return;
+    }
+
+    if (!/^\d*\.?\d*$/.test(value)) {
+      return;
+    }
+
+    const [integerPart, decimalPart = ""] = value.split(".");
+    if (integerPart.length > 6 || decimalPart.length > MAX_PRICE_DECIMALS) {
+      return;
+    }
+
+    const parsed = Number(value);
+    if (!Number.isNaN(parsed) && parsed > MAX_PRODUCT_VALUE) {
+      setFormData((current) => ({
+        ...current,
+        price: String(MAX_PRODUCT_VALUE),
+      }));
+      return;
+    }
+
+    setFormData((current) => ({ ...current, price: value }));
+  };
+
+  const handleStockChange = (value: string) => {
+    if (value === "") {
+      setFormData((current) => ({ ...current, stock: "" }));
+      return;
+    }
+
+    if (!/^\d+$/.test(value)) {
+      return;
+    }
+
+    const limited = value.slice(0, 6);
+    const parsed = Number(limited);
+    const clamped = Math.min(parsed, MAX_PRODUCT_VALUE);
+    setFormData((current) => ({ ...current, stock: String(clamped) }));
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] ?? null;
     setSelectedImage(file);
@@ -502,7 +556,8 @@ function ProductForm({
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) => handleNameChange(e.target.value)}
+          maxLength={MAX_PRODUCT_NAME_LENGTH}
           required
         />
       </div>
@@ -514,9 +569,10 @@ function ProductForm({
             type="number"
             step="0.01"
             value={formData.price}
-            onChange={(e) =>
-              setFormData({ ...formData, price: e.target.value })
-            }
+            onChange={(e) => handlePriceChange(e.target.value)}
+            max={MAX_PRODUCT_VALUE}
+            min={0}
+            inputMode="decimal"
             required
           />
         </div>
@@ -526,9 +582,12 @@ function ProductForm({
             id="stock"
             type="number"
             value={formData.stock}
-            onChange={(e) =>
-              setFormData({ ...formData, stock: e.target.value })
-            }
+            onChange={(e) => handleStockChange(e.target.value)}
+            max={MAX_PRODUCT_VALUE}
+            min={0}
+            step={1}
+            inputMode="numeric"
+            pattern="[0-9]*"
             required
           />
         </div>

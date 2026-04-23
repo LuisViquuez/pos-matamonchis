@@ -403,7 +403,7 @@ export function CartPanel({
                       </div>
                     )}
                   </div>
-                ) : totals.subtotal > 0 && totals.subtotal < 10_000 ? (
+                ) : totals.total > 0 && totals.total < 10_000 ? (
                   <p className="text-xs text-muted-foreground px-1">
                     Descuento personalizado disponible en ventas mayores a{" "}
                     {formatCurrency(10_000)}.

@@ -5,8 +5,8 @@ import { UsersManagement } from "@/components/admin/users-management";
 export const dynamic = 'force-dynamic';
 
 export default async function UsersPage() {
-  await requireAdmin();
+  const currentUser = await requireAdmin();
   const users = await getAllUsers();
 
-  return <UsersManagement initialUsers={users} />;
+  return <UsersManagement initialUsers={users} currentUserId={currentUser.id} />;
 }

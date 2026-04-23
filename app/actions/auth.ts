@@ -41,10 +41,12 @@ export async function loginAction(
     return { error: "Formato de correo inválido" };
   }
 
-  if (password.length < 8) {
+  if (password.length < 6) {
     await waitRemaining();
-    return { error: "La contraseña debe tener mínimo 8 caracteres" };
+    return { error: "La contraseña debe tener mínimo 6 caracteres" };
   }
+
+  let loggedInRole: AuthUser["role"] | null = null;
 
   try {
     const result = await login(email, password, rememberMe);
@@ -53,6 +55,8 @@ export async function loginAction(
       await waitRemaining();
       return { error: result.error || "Credenciales inválidas" };
     }
+
+    loggedInRole = result.user?.role ?? null;
   } catch (error) {
     console.error("Login error:", error);
     await waitRemaining();
@@ -60,7 +64,7 @@ export async function loginAction(
   }
 
   await waitRemaining();
-  redirect("/dashboard");
+  redirect(loggedInRole === "cashier" ? "/dashboard/pos" : "/dashboard");
 }
 
 export async function logoutAction() {

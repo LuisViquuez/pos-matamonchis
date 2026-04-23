@@ -5,7 +5,27 @@ import { requireAdmin, hashPassword } from "@/lib/auth";
 import type { User } from "@/types/models";
 import type { CreateUserDTO, UpdateUserDTO } from "@/types/dto";
 
-export async function getUsers(): Promise<Omit<User, "password_hash">[]> {
+type SafeUser = Omit<User, "password_hash">;
+
+function serializeUser(user: {
+  id: number;
+  name: string;
+  email: string;
+  role: string;
+  isActive: boolean;
+  createdAt: Date;
+}): SafeUser {
+  return {
+    id: user.id,
+    name: user.name,
+    email: user.email,
+    role: user.role as User["role"],
+    is_active: user.isActive,
+    created_at: user.createdAt,
+  };
+}
+
+export async function getUsers(): Promise<SafeUser[]> {
   await requireAdmin();
 
   const users = await prisma.user.findMany({
@@ -19,12 +39,12 @@ export async function getUsers(): Promise<Omit<User, "password_hash">[]> {
     },
     orderBy: { name: "asc" },
   });
-  return users as unknown as Omit<User, "password_hash">[];
+  return users.map(serializeUser);
 }
 
 export async function getUserById(
   id: number,
-): Promise<Omit<User, "password_hash"> | null> {
+): Promise<SafeUser | null> {
   await requireAdmin();
 
   const user = await prisma.user.findUnique({
@@ -38,12 +58,12 @@ export async function getUserById(
       createdAt: true,
     },
   });
-  return user as unknown as Omit<User, "password_hash"> | null;
+  return user ? serializeUser(user) : null;
 }
 
 export async function createUser(
   data: CreateUserDTO,
-): Promise<Omit<User, "password_hash">> {
+): Promise<SafeUser> {
   await requireAdmin();
 
   // Check if email already exists
@@ -71,15 +91,26 @@ export async function createUser(
       createdAt: true,
     },
   });
-  return result as unknown as Omit<User, "password_hash">;
+  return serializeUser(result);
 }
 
 export async function updateUser(
   data: UpdateUserDTO,
-): Promise<Omit<User, "password_hash">> {
+): Promise<SafeUser> {
   await requireAdmin();
 
-  const existing = await getUserById(data.id);
+  const existing = await prisma.user.findUnique({
+    where: { id: data.id },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      isActive: true,
+      createdAt: true,
+    },
+  });
+
   if (!existing) {
     throw new Error("User not found");
   }
@@ -92,24 +123,38 @@ export async function updateUser(
     if (emailExists) throw new Error("Email already exists");
   }
 
-  // If password is provided, hash it
-  let passwordUpdate = "";
+  const updateData: {
+    name?: string;
+    email?: string;
+    role?: "admin" | "cashier";
+    isActive?: boolean;
+    passwordHash?: string;
+  } = {};
+
+  if (data.name !== undefined) {
+    updateData.name = data.name;
+  }
+  if (data.email !== undefined) {
+    updateData.email = data.email;
+  }
+  if (data.role !== undefined) {
+    updateData.role = data.role;
+  }
+  if (data.is_active !== undefined) {
+    updateData.isActive = data.is_active;
+  }
+
   if (data.password) {
-    const passwordHash = await hashPassword(data.password);
-    await prisma.user.update({
-      where: { id: data.id },
-      data: { passwordHash },
-    });
+    updateData.passwordHash = await hashPassword(data.password);
+  }
+
+  if (Object.keys(updateData).length === 0) {
+    return serializeUser(existing);
   }
 
   const result = await prisma.user.update({
     where: { id: data.id },
-    data: {
-      name: data.name ?? existing.name,
-      email: data.email ?? existing.email,
-      role: data.role ?? existing.role,
-      isActive: data.is_active ?? existing.is_active,
-    },
+    data: updateData,
     select: {
       id: true,
       name: true,
@@ -119,7 +164,7 @@ export async function updateUser(
       createdAt: true,
     },
   });
-  return result as unknown as Omit<User, "password_hash">;
+  return serializeUser(result);
 }
 
 export async function deleteUser(id: number): Promise<void> {
@@ -131,7 +176,7 @@ export async function deleteUser(id: number): Promise<void> {
 
 export async function toggleUserStatus(
   id: number,
-): Promise<Omit<User, "password_hash">> {
+): Promise<SafeUser> {
   await requireAdmin();
 
   const user = await prisma.user.findUnique({
@@ -158,10 +203,10 @@ export async function toggleUserStatus(
       createdAt: true,
     },
   });
-  return result as unknown as Omit<User, "password_hash">;
+  return serializeUser(result);
 }
 
 // Alias export for compatibility
-export async function getAllUsers(): Promise<Omit<User, "password_hash">[]> {
+export async function getAllUsers(): Promise<SafeUser[]> {
   return getUsers();
 }
