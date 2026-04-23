@@ -1,4 +1,5 @@
 import { requireAuth } from "@/app/actions/auth";
+import { redirect } from "next/navigation";
 import { getTodaySummary, getRecentSales } from "@/services/reports";
 import { DashboardStats } from "@/components/dashboard/stats";
 import { RecentSalesTable } from "@/components/dashboard/recent-sales";
@@ -8,6 +9,11 @@ export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   const user = await requireAuth();
+
+  if (user.role === "cashier") {
+    redirect("/dashboard/pos");
+  }
+
   const [summary, recentSales] = await Promise.all([
     getTodaySummary(),
     getRecentSales(5),

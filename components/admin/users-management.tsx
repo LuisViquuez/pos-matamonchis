@@ -30,6 +30,8 @@ import {
   UserCheck,
   Users,
   Loader2,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import {
   createUserAction,
@@ -39,11 +41,18 @@ import {
 import type { User } from "@/types/models";
 import type { CreateUserDTO, UpdateUserDTO } from "@/types/dto";
 
+type UpdateUserFormDTO = Omit<UpdateUserDTO, "id">;
+const MAX_USER_FIELD_LENGTH = 30;
+
 interface UsersManagementProps {
   initialUsers: User[];
+  currentUserId: number;
 }
 
-export function UsersManagement({ initialUsers }: UsersManagementProps) {
+export function UsersManagement({
+  initialUsers,
+  currentUserId,
+}: UsersManagementProps) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -59,38 +68,36 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
   const handleCreate = async (data: CreateUserDTO) => {
     setIsSubmitting(true);
     const result = await createUserAction(data);
+    const createdUser = result.user;
     if (result.success) {
-      const newUser: User = {
-        id: Date.now(),
-        name: data.name,
-        email: data.email,
-        role: data.role,
-        is_active: true,
-        created_at: new Date().toISOString(),
-      };
-      setUsers([...users, newUser]);
+      if (createdUser) {
+        setUsers((current) => [...current, createdUser]);
+      }
       setIsCreateOpen(false);
     }
     setIsSubmitting(false);
   };
 
-  const handleUpdate = async (id: number, data: UpdateUserDTO) => {
+  const handleUpdate = async (id: number, data: UpdateUserFormDTO) => {
     setIsSubmitting(true);
     const result = await updateUserAction(id, data);
+    const updatedUser = result.user;
     if (result.success) {
-      setUsers(
-        users.map((u) =>
-          u.id === id
-            ? { ...u, name: data.name!, email: data.email!, role: data.role! }
-            : u,
-        ),
-      );
+      if (updatedUser) {
+        setUsers((current) =>
+          current.map((user) => (user.id === id ? updatedUser : user)),
+        );
+      }
       setEditUser(null);
     }
     setIsSubmitting(false);
   };
 
   const handleToggleStatus = async (id: number) => {
+    if (id === currentUserId) {
+      return;
+    }
+
     const result = await toggleUserStatusAction(id);
     if (result.success) {
       setUsers(
@@ -119,7 +126,10 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
             <DialogHeader>
               <DialogTitle>Crear Usuario</DialogTitle>
             </DialogHeader>
-            <UserForm onSubmit={handleCreate} isSubmitting={isSubmitting} />
+            <UserForm
+              onSubmit={(data) => handleCreate(data as CreateUserDTO)}
+              isSubmitting={isSubmitting}
+            />
           </DialogContent>
         </Dialog>
       </div>
@@ -230,6 +240,12 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
                             size="icon"
                             className="h-8 w-8"
                             onClick={() => handleToggleStatus(user.id)}
+                            disabled={user.id === currentUserId}
+                            title={
+                              user.id === currentUserId
+                                ? "No puedes cambiar tu propio estado"
+                                : undefined
+                            }
                           >
                             {user.is_active ? (
                               <UserX className="h-4 w-4 text-destructive" />
@@ -258,7 +274,7 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
             <UserForm
               initialData={editUser}
               onSubmit={(data) =>
-                handleUpdate(editUser.id, data as UpdateUserDTO)
+                handleUpdate(editUser.id, data as UpdateUserFormDTO)
               }
               isSubmitting={isSubmitting}
             />
@@ -271,7 +287,7 @@ export function UsersManagement({ initialUsers }: UsersManagementProps) {
 
 interface UserFormProps {
   initialData?: User;
-  onSubmit: (data: CreateUserDTO | UpdateUserDTO) => void;
+  onSubmit: (data: CreateUserDTO | UpdateUserFormDTO) => void;
   isSubmitting: boolean;
 }
 
@@ -282,13 +298,14 @@ function UserForm({ initialData, onSubmit, isSubmitting }: UserFormProps) {
     password: "",
     role: initialData?.role || "cashier",
   });
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (initialData) {
       // Update - password is optional
-      const updateData: UpdateUserDTO = {
+      const updateData: UpdateUserFormDTO = {
         name: formData.name,
         email: formData.email,
         role: formData.role as "admin" | "cashier",
@@ -315,7 +332,13 @@ function UserForm({ initialData, onSubmit, isSubmitting }: UserFormProps) {
         <Input
           id="name"
           value={formData.name}
-          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              name: e.target.value.slice(0, MAX_USER_FIELD_LENGTH),
+            })
+          }
+          maxLength={MAX_USER_FIELD_LENGTH}
           required
         />
       </div>
@@ -325,31 +348,58 @@ function UserForm({ initialData, onSubmit, isSubmitting }: UserFormProps) {
           id="email"
           type="email"
           value={formData.email}
-          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+          onChange={(e) =>
+            setFormData({
+              ...formData,
+              email: e.target.value.slice(0, MAX_USER_FIELD_LENGTH),
+            })
+          }
           required
-          maxLength={150}
+          maxLength={MAX_USER_FIELD_LENGTH}
         />
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">
           Contraseña {initialData && "(dejar vacío para mantener)"}
         </Label>
-        <Input
-          id="password"
-          type="password"
-          value={formData.password}
-          onChange={(e) =>
-            setFormData({ ...formData, password: e.target.value })
-          }
-          required={!initialData}
-          maxLength={16}
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? "text" : "password"}
+            value={formData.password}
+            onChange={(e) =>
+              setFormData({
+                ...formData,
+                password: e.target.value.slice(0, MAX_USER_FIELD_LENGTH),
+              })
+            }
+            required={!initialData}
+            maxLength={MAX_USER_FIELD_LENGTH}
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((current) => !current)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+            aria-label={
+              showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+            }
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
       </div>
       <div className="space-y-2">
         <Label htmlFor="role">Rol</Label>
         <Select
           value={formData.role}
-          onValueChange={(value) => setFormData({ ...formData, role: value })}
+          onValueChange={(value) =>
+            setFormData({ ...formData, role: value as "admin" | "cashier" })
+          }
         >
           <SelectTrigger>
             <SelectValue />

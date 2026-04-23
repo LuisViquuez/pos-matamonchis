@@ -14,6 +14,9 @@ import {
 } from "@/services/products";
 import type { Product } from "@/types/models";
 
+const MAX_PRODUCT_NAME_LENGTH = 30;
+const MAX_PRODUCT_VALUE = 999_999;
+
 function readStringField(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -63,11 +66,22 @@ function parseProductFormData(formData: FormData, isUpdate = false) {
 
   return {
     id,
-    name: readRequiredStringField(formData, "name"),
+    name: (() => {
+      const value = readRequiredStringField(formData, "name");
+      if (value.length > MAX_PRODUCT_NAME_LENGTH) {
+        throw new Error(
+          `El nombre no puede tener más de ${MAX_PRODUCT_NAME_LENGTH} caracteres`,
+        );
+      }
+      return value;
+    })(),
     price: (() => {
       const parsed = readNumberField(formData, "price");
       if (parsed <= 0) {
         throw new Error("El precio debe ser mayor a cero");
+      }
+      if (parsed > MAX_PRODUCT_VALUE) {
+        throw new Error(`El precio no puede ser mayor a ${MAX_PRODUCT_VALUE}`);
       }
       return parsed;
     })(),
@@ -76,6 +90,9 @@ function parseProductFormData(formData: FormData, isUpdate = false) {
       const parsed = readNumberField(formData, "stock");
       if (!Number.isInteger(parsed) || parsed < 0) {
         throw new Error("El stock debe ser un entero mayor o igual a cero");
+      }
+      if (parsed > MAX_PRODUCT_VALUE) {
+        throw new Error(`El stock no puede ser mayor a ${MAX_PRODUCT_VALUE}`);
       }
       return parsed;
     })(),

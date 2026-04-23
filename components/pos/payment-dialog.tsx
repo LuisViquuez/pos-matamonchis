@@ -31,6 +31,8 @@ const paymentMethods = [
   { id: "sinpe" as const, label: "SINPE", icon: Smartphone },
 ];
 
+const MAX_CASH_RECEIVED = 99_999_999;
+
 export function PaymentDialog({
   open,
   onOpenChange,
@@ -44,20 +46,39 @@ export function PaymentDialog({
   const [cashReceived, setCashReceived] = useState("");
   const [customerName, setCustomerName] = useState("");
 
+  const cashReceivedAmount = cashReceived ? Number(cashReceived) : 0;
+
   const change =
     selectedMethod === "cash" && cashReceived
-      ? Math.max(0, parseFloat(cashReceived) - total)
+      ? Math.max(0, cashReceivedAmount - total)
       : 0;
 
   const isCashReady =
     selectedMethod === "cash" &&
     !!cashReceived &&
-    parseFloat(cashReceived) >= total;
+    cashReceivedAmount >= total;
+
+  const handleCashReceivedChange = (value: string) => {
+    if (value === "") {
+      setCashReceived("");
+      return;
+    }
+
+    // Solo dígitos y máximo 8 cifras para evitar montos mayores a 99,999,999.
+    if (!/^\d+$/.test(value)) {
+      return;
+    }
+
+    const limited = value.slice(0, 8);
+    const parsed = Number(limited);
+    const clamped = Math.min(parsed, MAX_CASH_RECEIVED);
+    setCashReceived(String(clamped));
+  };
 
   const handleConfirm = () => {
     onConfirm(
       selectedMethod,
-      selectedMethod === "cash" ? parseFloat(cashReceived) : undefined,
+      selectedMethod === "cash" ? cashReceivedAmount : undefined,
       customerName || undefined,
     );
   };
@@ -103,7 +124,10 @@ export function PaymentDialog({
               id="customerName"
               placeholder="Cliente General"
               value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
+              onChange={(e) =>
+                setCustomerName(e.target.value.slice(0, 30))
+              }
+              maxLength={30}
               disabled={isProcessing}
             />
           </div>
@@ -144,10 +168,15 @@ export function PaymentDialog({
                 <Input
                   id="cashReceived"
                   type="number"
-                  placeholder="0.00"
+                  placeholder="0"
                   value={cashReceived}
-                  onChange={(e) => setCashReceived(e.target.value)}
+                  onChange={(e) => handleCashReceivedChange(e.target.value)}
                   disabled={isProcessing}
+                  max={MAX_CASH_RECEIVED}
+                  min={0}
+                  step={1}
+                  inputMode="numeric"
+                  pattern="[0-9]*"
                   className="text-lg font-mono"
                 />
               </div>

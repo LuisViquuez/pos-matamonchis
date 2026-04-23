@@ -4,7 +4,7 @@
  * Reglas:
  *  - 2x1 en Gelatinas: por cada 2 unidades se cobra 1.
  *  - Descuento personalizado (0.5 – 10 %, pasos de 0.5)
- *    disponible si subtotal >= 10 000 y NO hay 2x1 activo.
+ *    disponible si total de venta (subtotal + IVA) >= 10 000.
  *  - Nunca se aplican dos promociones al mismo tiempo.
  */
 
@@ -136,11 +136,14 @@ export async function evaluatePromotions(
 
   const rawSubtotal = evaluatedItems.reduce((s, i) => s + i.subtotal, 0);
 
+  const tax = Math.round(rawSubtotal * 0.13);
+  const grossTotal = rawSubtotal + tax;
+
   // 3. Exclusividad — el descuento personalizado tiene prioridad sobre el 2x1
   //    cuando el usuario lo activa explícitamente.
-  //    canApplyCustomDiscount está disponible si subtotal >= 10 000,
-  //    independientemente de si hay 2x1.
-  const canApplyCustomDiscount = rawSubtotal >= 10_000;
+  //    canApplyCustomDiscount está disponible si total de venta
+  //    (subtotal + IVA) >= 10 000.
+  const canApplyCustomDiscount = grossTotal >= 10_000;
 
   const wantCustom = customDiscountPercent > 0 && canApplyCustomDiscount;
 
@@ -158,7 +161,7 @@ export async function evaluatePromotions(
     promotionDiscount = 0;
     const clamped = Math.min(Math.max(customDiscountPercent, 0), 10);
     effectiveCustomPercent = Math.round(clamped * 10) / 10;
-    customDiscount = Math.round(rawSubtotal * (effectiveCustomPercent / 100));
+    customDiscount = Math.round(grossTotal * (effectiveCustomPercent / 100));
     activePromotion = "custom";
     promotionMessage =
       `Descuento del ${effectiveCustomPercent}% aplicado` +
@@ -171,8 +174,7 @@ export async function evaluatePromotions(
   }
 
   const totalDiscount = promotionDiscount + customDiscount;
-  const tax = Math.round(rawSubtotal * 0.13);
-  const total = Math.max(0, rawSubtotal + tax - totalDiscount);
+  const total = Math.max(0, grossTotal - totalDiscount);
 
   return {
     items: evaluatedItems,

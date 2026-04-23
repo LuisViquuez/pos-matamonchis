@@ -49,8 +49,11 @@ async function ensureProductUploadDirectory() {
   await mkdir(PRODUCT_UPLOAD_DIRECTORY, { recursive: true });
 }
 
-function isLocalProductImage(imageUrl?: string | null) {
-  return !!imageUrl && imageUrl.startsWith(`${PRODUCT_UPLOAD_PUBLIC_PATH}/`);
+function isLocalProductImage(imageUrl?: string | null): imageUrl is string {
+  return (
+    typeof imageUrl === "string" &&
+    imageUrl.startsWith(`${PRODUCT_UPLOAD_PUBLIC_PATH}/`)
+  );
 }
 
 function getLocalProductImagePath(imageUrl: string) {
@@ -187,7 +190,7 @@ export async function deleteProduct(id: number): Promise<string | null> {
   });
 
   return existing?.imageUrl ?? null;
-}
+  }
 
 export async function toggleProductStatus(id: number): Promise<Product> {
   await requireAdmin();

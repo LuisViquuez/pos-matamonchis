@@ -13,12 +13,13 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { AlertCircle, Loader2, Mail, Lock } from "lucide-react";
+import { AlertCircle, Loader2, Mail, Lock, Eye, EyeOff } from "lucide-react";
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [savedEmail, setSavedEmail] = useState<string | undefined>(undefined);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     try {
@@ -85,14 +86,14 @@ export function LoginForm() {
         <form onSubmit={handleSubmit} action={formAction} className="space-y-4">
           {validationError && (
             <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{validationError}</span>
             </div>
           )}
 
           {state?.error && (
             <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-lg border border-destructive/20">
-              <AlertCircle className="h-4 w-4 flex-shrink-0" />
+              <AlertCircle className="h-4 w-4 shrink-0" />
               <span>{state.error}</span>
             </div>
           )}
@@ -126,13 +127,27 @@ export function LoginForm() {
               <Input
                 id="password"
                 name="password"
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="••••••••"
                 required
                 disabled={isPending}
                 maxLength={16}
-                className="pl-10 h-11 bg-background"
+                className="pl-10 pr-10 h-11 bg-background"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword((current) => !current)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={
+                  showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
+                }
+              >
+                {showPassword ? (
+                  <EyeOff className="h-4 w-4" />
+                ) : (
+                  <Eye className="h-4 w-4" />
+                )}
+              </button>
             </div>
           </div>
 

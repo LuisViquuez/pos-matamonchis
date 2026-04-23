@@ -11,10 +11,21 @@ export type LoginDTO = z.infer<typeof loginSchema>;
 
 // Product DTOs
 export const createProductSchema = z.object({
-  name: z.string().min(1, "El nombre del producto es requerido").max(150),
-  price: z.number().positive("El precio debe ser positivo"),
+  name: z
+    .string()
+    .min(1, "El nombre del producto es requerido")
+    .max(30, "El nombre no puede tener más de 30 caracteres"),
+  price: z
+    .number()
+    .positive("El precio debe ser positivo")
+    .max(999999, "El precio no puede ser mayor a 999999"),
   category: z.string().min(1, "La categoría es requerida").max(100),
-  stock: z.number().int().min(0, "El stock no puede ser negativo").default(0),
+  stock: z
+    .number()
+    .int()
+    .min(0, "El stock no puede ser negativo")
+    .max(999999, "El stock no puede ser mayor a 999999")
+    .default(0),
   image_url: z.string().url().nullable().optional(),
   is_active: z.boolean().default(true),
 });
@@ -29,15 +40,18 @@ export type UpdateProductDTO = z.infer<typeof updateProductSchema>;
 
 // User DTOs
 export const createUserSchema = z.object({
-  name: z.string().min(1, "El nombre es requerido").max(120),
+  name: z
+    .string()
+    .min(1, "El nombre es requerido")
+    .max(30, "El nombre no puede tener más de 30 caracteres"),
   email: z
     .string()
     .email("Correo inválido")
-    .max(150, "El correo no puede tener más de 150 caracteres"),
+    .max(30, "El correo no puede tener más de 30 caracteres"),
   password: z
     .string()
     .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .max(16, "La contraseña no puede tener más de 16 caracteres"),
+    .max(30, "La contraseña no puede tener más de 30 caracteres"),
   role: z.enum(["admin", "cashier"]),
   is_active: z.boolean().default(true),
 });
@@ -46,16 +60,20 @@ export type CreateUserDTO = z.infer<typeof createUserSchema>;
 
 export const updateUserSchema = z.object({
   id: z.number(),
-  name: z.string().min(1, "El nombre es requerido").max(120).optional(),
+  name: z
+    .string()
+    .min(1, "El nombre es requerido")
+    .max(30, "El nombre no puede tener más de 30 caracteres")
+    .optional(),
   email: z
     .string()
     .email("Correo inválido")
-    .max(150, "El correo no puede tener más de 150 caracteres")
+    .max(30, "El correo no puede tener más de 30 caracteres")
     .optional(),
   password: z
     .string()
     .min(6, "La contraseña debe tener al menos 6 caracteres")
-    .max(16, "La contraseña no puede tener más de 16 caracteres")
+    .max(30, "La contraseña no puede tener más de 30 caracteres")
     .optional(),
   role: z.enum(["admin", "cashier"]).optional(),
   is_active: z.boolean().optional(),

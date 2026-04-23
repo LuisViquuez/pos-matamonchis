@@ -32,7 +32,7 @@ function BrandLogo({ className }: { className?: string }) {
 }
 
 const navItems = [
-  { href: "/dashboard", label: "Inicio", icon: Home },
+  { href: "/dashboard", label: "Inicio", icon: Home, adminOnly: true },
   { href: "/dashboard/pos", label: "Punto de Venta", icon: ShoppingCart },
   // { href: "/dashboard/reports", label: "Reportes", icon: BarChart3 },
   {
@@ -48,6 +48,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isDesktopCollapsed, setIsDesktopCollapsed] = useState(false);
+  const homeHref = user.role === "cashier" ? "/dashboard/pos" : "/dashboard";
 
   const filteredItems = navItems.filter(
     (item) => !item.adminOnly || user.role === "admin",
@@ -58,7 +59,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
       {/* Mobile header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-card border-b border-border">
         <div className="flex items-center justify-between h-16 px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href={homeHref} className="flex items-center gap-2">
             <div className="w-9 h-9 rounded-lg bg-muted overflow-hidden flex items-center justify-center">
               <BrandLogo className="h-full w-full object-contain p-1.5" />
             </div>

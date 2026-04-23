@@ -53,7 +53,7 @@ export function ReceiptDialog({
               </h2>
               <p className="text-sm text-muted-foreground">Ticket de Venta</p>
               <p className="text-xs text-muted-foreground mt-1">
-                Folio: #{sale.id} |{" "}
+                Factura: #{sale.id} |{" "}
                 {new Date(sale.created_at!).toLocaleString("es-MX")}
               </p>
             </div>

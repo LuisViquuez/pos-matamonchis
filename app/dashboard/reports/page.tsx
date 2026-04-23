@@ -1,4 +1,4 @@
-import { requireAuth } from "@/app/actions/auth";
+import { requireAdmin } from "@/app/actions/auth";
 import {
   getSalesReport,
   getTopProducts,
@@ -25,7 +25,7 @@ interface ReportsPageProps {
 }
 
 export default async function ReportsPage({ searchParams }: ReportsPageProps) {
-  await requireAuth();
+  await requireAdmin();
 
   const params = await searchParams;
   const period = params.period || "today";
@@ -55,13 +55,16 @@ export default async function ReportsPage({ searchParams }: ReportsPageProps) {
       startDate.setHours(0, 0, 0, 0);
   }
 
+  const startDateIso = startDate.toISOString();
+  const endDateIso = endDate.toISOString();
+
   const [salesReport, topProducts, paymentMethods, hourlySales, userSales] =
     await Promise.all([
-      getSalesReport(startDate, endDate),
-      getTopProducts(10, startDate, endDate),
-      getSalesByPaymentMethod(startDate, endDate),
-      getSalesByHour(startDate, endDate),
-      getSalesByUser(startDate.toISOString(), endDate.toISOString()),
+      getSalesReport(startDateIso, endDateIso),
+      getTopProducts(10, startDateIso, endDateIso),
+      getSalesByPaymentMethod(startDateIso, endDateIso),
+      getSalesByHour(startDateIso, endDateIso),
+      getSalesByUser(startDateIso, endDateIso),
     ]);
 
   return (
